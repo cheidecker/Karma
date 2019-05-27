@@ -149,7 +149,7 @@ def get_logNormal_width(tobject):
         _return_value = (0., 0.)
     return _return_value
 
-
+@InputROOT.add_function
 def truncated_logNormal_width_hist(tobjects, x_bins, truncation):
     """Get truncated logNormal width values of all given histograms and fill into new TProfile"""
     x_binning = [min([x[0] for x in x_bins])] + sorted([x[1] for x in x_bins])
