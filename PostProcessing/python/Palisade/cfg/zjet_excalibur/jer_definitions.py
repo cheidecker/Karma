@@ -132,7 +132,7 @@ def truncated_rms_hist(tobjects, x_bins, truncation):
 
 
 @InputROOT.add_function
-def get_gaussian_width(tobject):
+def get_logNormal_width(tobject):
     """Determines the Gaussian width and uncertainty of a histogram by fitting a Gaussian function."""
     _new_tobject = _ROOTObjectFunctions._project_or_clone(tobject, "e")
     _rms = _new_tobject.GetRMS()
@@ -172,13 +172,13 @@ def truncated_logNormal_width_hist(tobjects, x_bins, truncation):
             # get logNormal width value and uncertainty
             # x_min = _tobj_clone.GetXaxis().GetXmin()
             # x_max = _tobj_clone.GetXaxis().GetXmax()
-            _logNormal_width, _logNormal_width_error = get_gaussian_width(_tobj_clone)
+            _logNormal_width, _logNormal_width_error = get_logNormal_width(_tobj_clone)
         else:
             _logNormal_width, _logNormal_width_error = 0., 0.
         # Fill values into new histogram
         _new_tobject.SetBinContent(bin_index, _logNormal_width)
         _new_tobject.SetBinError(bin_index, _logNormal_width_error)
-        print('Extracting Gaussian width:   {} +/- {}'.format(_logNormal_width, _logNormal_width_error))
+        print('Extracting logNormal width:   {} +/- {}'.format(_logNormal_width, _logNormal_width_error))
     return asrootpy(_new_tobject)
 
 
