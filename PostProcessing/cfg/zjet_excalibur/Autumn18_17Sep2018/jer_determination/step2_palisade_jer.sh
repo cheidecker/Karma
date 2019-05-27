@@ -9,7 +9,7 @@ plotting_truncated_rms=false
 plotting_extrapolation=false
 rootfiles_extrapolation=false
 
-plotting_dependency=true
+plotting_dependency=false
 rootfiles_dependency=false
 
 if $rootfiles_truncated_rms; then
