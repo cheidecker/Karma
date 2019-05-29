@@ -87,7 +87,7 @@ QUANTITIES = {
         'ptbalance': Quantity(
             name='ptbalance',
             expression='jet1pt/zpt',
-            binning=np.linspace(0, 2, 50),
+            binning=np.linspace(0, 2, 200),
         ),
         'alpha': Quantity(
             name='alpha',
@@ -116,6 +116,27 @@ QUANTITIES = {
             expression='npumean',
             binning=np.linspace(-0.5, 80.5, 82),
         ),
+    },
+    'mc': {
+        'genjer': Quantity(
+            name='genjer',
+            expression='jet1pt/genjet1pt',
+            binning=np.linspace(0., 2., 200),
+        ),
+        'pli': Quantity(
+            name='pli',
+            expression='genjet1pt/genzpt',
+            binning=np.linspace(0., 2., 200),
+        ),
+        'zres': Quantity(
+            name='zres',
+            expression='genzpt/zpt',
+            binning=np.linspace(0., 2., 400),
+        ),
+
+    },
+    'data': {
+
     }
 }
 

@@ -109,6 +109,22 @@ TASKS = {
             for _suffix in ("pt", "eta", "phi")
         ] + ["run2018:{}".format(_q) for _q in ("zmass", "met", "metphi", "mpf", "ptbalance", "rho", "npumean", "npv")],
     },
+
+    "JER_Binning_Data": {
+        "splittings": ["zpt", "eta_wide", "alpha_exclusive"],
+        "histograms": [
+            "{}@weight".format(_q) for _q in ("ptbalance", )  # no weight
+        ],
+        "profiles": [],
+    },
+
+    "JER_Binning_MC": {
+        "splittings": ["zpt", "eta_wide", "alpha_exclusive"],
+        "histograms": [
+            "{}@weight".format(_q) for _q in ("ptbalance", "pli", "zres", "genjer")  # no weight
+        ],
+        "profiles": [],
+    },
 }
 
 # -- add run period-specific tasks
