@@ -130,7 +130,7 @@ def truncated_rms_hist(tobjects, x_bins, truncation):
             ("{:.4f}".format(_rms_error) if _rms is not 0. else "0"),
             _bin_index))
     return asrootpy(_new_tobject)
-    
+
 
 @InputROOT.add_function
 def get_gaussian_width(tobject):
@@ -211,6 +211,7 @@ def get_logNormal_width(tobject):
         else:
             _return_value = (_fit.Parameter(1), _fit.ParError(1))
     return _return_value
+
 
 @InputROOT.add_function
 def truncated_logNormal_width_hist(tobjects, x_bins, truncation):

@@ -44,8 +44,8 @@ LOOKUP_CHANNEL_LABEL = {
 
 
 def get_config(channel, sample_name, jec_name, run_periods, corr_levels,
-               basename_data='CombinationData2018ABC',
-               basename_mc='CombinationMC',
+               basename_data='JER_Binning_Data_ABC',
+               basename_mc='JER_Binning_MC',
                output_format='test.root',
                root=True):
     """
