@@ -695,7 +695,7 @@ def cli(argument_parser):
     # optional parameters
     argument_parser.add_argument('--output-format',
                                  help="format string defining name of output ROOT files. Default: '{%(default)s}'",
-                                 default='JER_truncated_RMS_Z{channel}_{sample}_{jec}_{corr_level}/{plot_label}.pdf')
+                                 default='JER_truncated_logNormal_Z{channel}_{sample}_{jec}_{corr_level}/{plot_label}.pdf')
     argument_parser.add_argument('--root', help="Switch output to root files instead of plots ", dest='root',
                                  action='store_true')
 
@@ -711,7 +711,7 @@ def run(args):
     from Karma.PostProcessing.Palisade.cfg.zjet_excalibur.jer_definitions import *
     
     if args.output_dir is None:
-        args.output_dir = "JER_truncated_RMS_{}".format(datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S_%f"))
+        args.output_dir = "JER_truncated_logNormal_{}".format(datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S_%f"))
 
     for channel in args.channels:
         print("Making root file for channel '{}'...".format(channel))
@@ -724,7 +724,7 @@ def run(args):
             basename_data=args.basename_data,
             basename_mc=args.basename_mc,
             output_format=(args.output_format if not args.root else
-                           'JER_truncated_RMS_Z{channel}_{sample}_{jec}_{corr_level}.root'),
+                           'JER_truncated_logNormal_Z{channel}_{sample}_{jec}_{corr_level}.root'),
             root=args.root
         )
         if args.root:

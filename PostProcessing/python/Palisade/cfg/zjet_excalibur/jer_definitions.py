@@ -5,6 +5,7 @@ import numpy as np
 from array import array
 from termcolor import colored
 from rootpy import asrootpy
+import root_numpy
 
 from Karma.PostProcessing.Palisade import InputROOT
 from Karma.PostProcessing.Palisade._input import _ROOTObjectFunctions
@@ -129,100 +130,19 @@ def truncated_rms_hist(tobjects, x_bins, truncation):
             ("{:.4f}".format(_rms_error) if _rms is not 0. else "0"),
             _bin_index))
     return asrootpy(_new_tobject)
-
-
-@InputROOT.add_function
-def get_logNormal_width(tobject):
-    """Determines the Gaussian width and uncertainty of a histogram by fitting a Gaussian function."""
-    _new_tobject = _ROOTObjectFunctions._project_or_clone(tobject, "e")
-    _rms = _new_tobject.GetRMS()
-    _mean = _new_tobject.GetMean()
-    _deviation = 1.  # allow 10% deviation from RMS and Mean values
-    # select which fit to perform:
-    _fit_function = ROOT.TF1("logNormal_fit", "[0]*TMath::LogNormal(x, [1], 0, [2])", 0., 2.)  # LogNormal(x, sigma, theta, m)
-    _fit_function.SetParameters(4000., _rms, _mean)
-    _fit_function.SetParNames("amplitude", "sigma", "mean")
-    try:
-        _fit = _new_tobject.Fit("logNormal_fit", "results", "goff").Get()
-    except Exception as err:
-        print('WARNING: ROOT error occured during logNormal fit: {}'.format(err))
-        _return_value = (0., 0.)
-    return _return_value
-
-@InputROOT.add_function
-def truncated_logNormal_width_hist(tobjects, x_bins, truncation):
-    """Get truncated logNormal width values of all given histograms and fill into new TProfile"""
-    x_binning = [min([x[0] for x in x_bins])] + sorted([x[1] for x in x_bins])
-    _hist_name = uuid.uuid4().get_hex()
-    _new_tobject = ROOT.TH1D("hist_logNormal_"+_hist_name, "hist_logNormal_"+_hist_name, len(tobjects), array('d', x_binning))
-    x_axis = _new_tobject.GetXaxis()
-    _tobj_clones = []
-    # clone all given histograms to avoid changing the original
-    for _tobj in tobjects:
-        _tobj_clones.append(_ROOTObjectFunctions._project_or_clone(_tobj, "e"))
-    # get RMS and correction factor to compensate for truncation effects if necessary
-    for index, (_tobj_clone, x_bin) in enumerate(zip(_tobj_clones, x_bins)):
-        # truncate histogram if necessary
-        if truncation is not None and truncation != 100.0:
-            _tobj_clone, _real_truncation, a, b = truncate_hist(_tobj_clone, truncation)
-        # Calculate index of bin in new histogram
-        bin_index = x_axis.FindBin((x_bin[0] + x_bin[1]) / 2.)
-        # Check if truncated histogram contains enough (>10) entries
-        if _tobj_clone.GetEffectiveEntries() > 10.:
-            # get logNormal width value and uncertainty
-            # x_min = _tobj_clone.GetXaxis().GetXmin()
-            # x_max = _tobj_clone.GetXaxis().GetXmax()
-            _logNormal_width, _logNormal_width_error = get_logNormal_width(_tobj_clone)
-        else:
-            _logNormal_width, _logNormal_width_error = 0., 0.
-        # Fill values into new histogram
-        _new_tobject.SetBinContent(bin_index, _logNormal_width)
-        _new_tobject.SetBinError(bin_index, _logNormal_width_error)
-        print('Extracting logNormal width:   {} +/- {}'.format(_logNormal_width, _logNormal_width_error))
-    return asrootpy(_new_tobject)
-
+    
 
 @InputROOT.add_function
 def get_gaussian_width(tobject):
     """Determines the Gaussian width and uncertainty of a histogram by fitting a Gaussian function."""
     _new_tobject = _ROOTObjectFunctions._project_or_clone(tobject, "e")
-    _rms = _new_tobject.GetRMS()
-    _mean = _new_tobject.GetMean()
-    _deviation = 1.  # allow 10% deviation from RMS and Mean values
-    # select which fit to perform:
-    _fit_own_gaussian = False  # fit own definition of gaussian function
-    _fit_double_gaussian = False  # fit double gaussian function
-    if _fit_own_gaussian:  # own Gaussian
-        _fit_function = ROOT.TF1('gaus_fit', "[0]/([2]*(2*pi)**(0.5))*TMath::Exp(-0.5*((x-[1])/[2])*((x-[1])/[2]))")
-        _fit_function.SetParameters(10., _mean, _rms)
-        _fit_function.SetParNames("amplitude", "mean", "sigma")
-        # _fit_function.SetParLimits(0, 0., 1000000000000.)
-        # _fit_function.SetParLimits(1, _mean - _deviation * _mean, _mean + _deviation * _mean)
-        # _fit_function.SetParLimits(2, _rms - _deviation * _rms, _rms + _deviation * _rms)
-        try:
-            _fit = _new_tobject.Fit("gaus_fit", "results", "goff").Get()
-        except Exception as err:
-            print('WARNING: ROOT error occured during Gaussian fit: {}'.format(err))
-            _return_value = (0., 0.)
-        else:
-            _return_value = (_fit.Parameter(2), _fit.ParError(2))
-    elif _fit_double_gaussian:  # own Double Gaussian
-        _fit_function = ROOT.TF1('double_gaus_fit', "[0]/([2]*(2*pi)**(0.5))*TMath::Exp(-0.5*((x-[1])/[2])*((x-[1])"
-                                                    "/[2]))+[3]/([4]*(2*pi)**(0.5))*TMath::Exp(-0.5*((x-[1])/[4])"
-                                                    "*((x-[1])/[4]))")
-        _fit_function.SetParameters(10., _mean, _rms, 10., 10. )
-        _fit_function.SetParNames("amplitude", "mean", "sigma", "mean2", "sigma2")
-        # _fit_function.SetParLimits(0, 0., 1000000000000.)
-        # _fit_function.SetParLimits(1, _mean - _deviation * _mean, _mean + _deviation * _mean)
-        # _fit_function.SetParLimits(2, _rms - _deviation * _rms, _rms + _deviation * _rms)
-        try:
-            _fit = _new_tobject.Fit("double_gaus_fit", "results", "goff").Get()
-        except Exception as err:
-            print('WARNING: ROOT error occured during Gaussian fit: {}'.format(err))
-            _return_value = (0., 0.)
-        else:
-            _return_value = (min(_fit.Parameter(2), _fit.Parameter(4)), min(_fit.ParError(2), _fit.ParError(4)))
-    else:  # ROOT Gaussian
+    # _rms = _new_tobject.GetRMS()
+    # _mean = _new_tobject.GetMean()
+    # Check if truncated histogram contains enough (>10) entries
+    if _new_tobject.GetEffectiveEntries() < 10.:
+        print(colored("WARNING: Skipping histogram due to less statistics (<10 Entries)", 'yellow'))
+        _return_value = (0., 0.)
+    else:
         try:
             print(_new_tobject.GetBinCenter(1), _new_tobject.GetBinCenter(_new_tobject.GetNbinsX() - 1))
             _fit = _new_tobject.Fit("gaus", "results", "goff", 0., 2.).Get()
@@ -264,6 +184,64 @@ def truncated_gaussian_width_hist(tobjects, x_bins, truncation):
         _new_tobject.SetBinContent(bin_index, _gaussian_width)
         _new_tobject.SetBinError(bin_index, _gaussian_width_error)
         print('Extracting Gaussian width:   {} +/- {}'.format(_gaussian_width, _gaussian_width_error))
+    return asrootpy(_new_tobject)
+
+
+@InputROOT.add_function
+def get_logNormal_width(tobject):
+    """Determines the Gaussian width and uncertainty of a histogram by fitting a Gaussian function."""
+    _new_tobject = _ROOTObjectFunctions._project_or_clone(tobject, "e")
+    # _rms = _new_tobject.GetRMS()
+    # _mean = _new_tobject.GetMean()
+    # Check if truncated histogram contains enough (>10) entries
+    if _new_tobject.GetEffectiveEntries() < 10.:
+        print(colored("WARNING: Skipping histogram due to less statistics (<10 Entries)", 'yellow'))
+        _return_value = (0., 0.)
+    else:
+        _fit_function = ROOT.TF1("logNormal_fit", "[0]*TMath::LogNormal(x, [1], 0, [2])", 0., 2.)  # LogNormal(x, sigma, theta, m) with (x>=theta) and (sigma>0) and (m>0)
+        _fit_function.SetParameters(1, 0.1, 1.)
+        _fit_function.SetParNames("amplitude", "sigma", "mean")
+        _fit_function.SetParLimits(1, 0.0001, 1.0)
+        _fit_function.SetParLimits(2, 0.0001, 2.0)
+        try:
+            _fit = _new_tobject.Fit("logNormal_fit", "results", "goff").Get()
+        except Exception as err:
+            print('WARNING: ROOT error occured during logNormal fit: {}'.format(err))
+            _return_value = (0., 0.)
+        else:
+            _return_value = (_fit.Parameter(1), _fit.ParError(1))
+    return _return_value
+
+@InputROOT.add_function
+def truncated_logNormal_width_hist(tobjects, x_bins, truncation):
+    """Get truncated logNormal width values of all given histograms and fill into new TProfile"""
+    x_binning = [min([x[0] for x in x_bins])] + sorted([x[1] for x in x_bins])
+    _hist_name = uuid.uuid4().get_hex()
+    _new_tobject = ROOT.TH1D("hist_logNormal_"+_hist_name, "hist_logNormal_"+_hist_name, len(tobjects), array('d', x_binning))
+    x_axis = _new_tobject.GetXaxis()
+    _tobj_clones = []
+    # clone all given histograms to avoid changing the original
+    for _tobj in tobjects:
+        _tobj_clones.append(_ROOTObjectFunctions._project_or_clone(_tobj, "e"))
+    # get RMS and correction factor to compensate for truncation effects if necessary
+    for index, (_tobj_clone, x_bin) in enumerate(zip(_tobj_clones, x_bins)):
+        # truncate histogram if necessary
+        if truncation is not None and truncation != 100.0:
+            _tobj_clone, _real_truncation, a, b = truncate_hist(_tobj_clone, truncation)
+        # Calculate index of bin in new histogram
+        bin_index = x_axis.FindBin((x_bin[0] + x_bin[1]) / 2.)
+        # Check if truncated histogram contains enough (>10) entries
+        if _tobj_clone.GetEffectiveEntries() > 10.:
+            # get logNormal width value and uncertainty
+            # x_min = _tobj_clone.GetXaxis().GetXmin()
+            # x_max = _tobj_clone.GetXaxis().GetXmax()
+            _logNormal_width, _logNormal_width_error = get_logNormal_width(_tobj_clone)
+        else:
+            _logNormal_width, _logNormal_width_error = 0., 0.
+        # Fill values into new histogram
+        _new_tobject.SetBinContent(bin_index, _logNormal_width)
+        _new_tobject.SetBinError(bin_index, _logNormal_width_error)
+        print('Extracting logNormal width:   {} +/- {}'.format(_logNormal_width, _logNormal_width_error))
     return asrootpy(_new_tobject)
 
 

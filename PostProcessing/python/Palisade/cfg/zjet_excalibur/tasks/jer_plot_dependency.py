@@ -49,7 +49,7 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
 
     # -- construct list of input files and correction level expansion dicts
     _input_files = dict()
-    _input_files['data'] = "{basename}/JER_truncated_RMS_Z{channel}_{sample_name}_{jec_name}_{corr_level}.root".format(
+    _input_files['data'] = "{basename}/{basename}_Z{channel}_{sample_name}_{jec_name}_{corr_level}.root".format(
         channel=channel,
         basename=basename,
         sample_name=sample_name,
@@ -268,9 +268,9 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                             'x_scale': 'linear',
                             'y_label': 'Ratio',
                             'y_range': (0.7, 1.3),
-                            'axhlines': [1.0],
+                            'axhlines': [dict(values=[1.0])],
                             'y_scale': 'linear',
-                            'legend_kwargs': dict(loc='lower left'),
+                            'legend_kwargs': dict(loc='lower right'),
                         },
                     ],
                     'texts': [
@@ -459,7 +459,7 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                             'x_scale': 'log',
                             'y_label': 'Ratio',
                             'y_range': (0.7, 1.3),
-                            'axhlines': [1.0],
+                            'axhlines': [dict(values=[1.0])],
                             'y_scale': 'linear',
                             'legend_kwargs': dict(loc='lower right'),
                         },
@@ -589,7 +589,7 @@ def run(args):
             colors=(args.colors if args.colors else ['grey', 'royalblue', 'springgreen', 'forestgreen', 'orange']),
             basename=args.basename,
             output_format=(args.output_format if not args.root else
-                           'JER_Extrapolations_Z{channel}_{jec}_{sample}_{corr_level}.root'),
+                           '{basename}_Extrapolations_Z{channel}_{jec}_{sample}_{corr_level}.root'.format(basename=args.basename)),
             root = (args.root if args.root else False)
         )
         if args.root:
