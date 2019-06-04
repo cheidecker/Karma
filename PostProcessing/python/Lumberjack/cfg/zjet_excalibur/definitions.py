@@ -131,7 +131,7 @@ QUANTITIES = {
         'zres': Quantity(
             name='zres',
             expression='genzpt/zpt',
-            binning=np.linspace(0., 2., 400),
+            binning=np.linspace(0., 2., 800),
         ),
 
     },
@@ -192,9 +192,11 @@ _ALPHA_BIN_EDGES = [0.0, 0.1, 0.15, 0.2, 0.3, 0.4]
 
 _ETA_BIN_EDGES_BARREL = (0, 1.3)
 _ETA_BIN_EDGES_WIDE = [0, 0.783, 1.305, 1.93, 2.5, 2.964, 3.2, 5.191]
+_ETA_BIN_EDGES_JER = [0., 0.522, 0.783, 1.131, 1.305, 1.74, 1.93, 2.043, 2.322, 2.5, 2.853, 2.964, 3.139, 5.191]
 
 _ETA_BIN_EDGES = QUANTITIES['global']['absjet1eta'].binning
 _ZPT_BIN_EDGES = QUANTITIES['global']['zpt'].binning
+_ZPT_BIN_EDGES_JER = [30, 50, 60, 85, 105, 130, 175, 230, 300, 400, 700, 1500]
 
 # specification of ways to split sample into sub-samples
 SPLITTINGS = {
@@ -279,6 +281,10 @@ SPLITTINGS['eta_narrow'] = dict({
     "absEta_{:04d}_{:04d}".format(int(_lo*1e3), int(_hi*1e3)): dict(absjet1eta=(_lo, _hi))
     for _lo, _hi in zip(_ETA_BIN_EDGES[:-1], _ETA_BIN_EDGES[1:])
 }, **{"absEta_all": dict(absjet1eta=(0, 5.191))})
+SPLITTINGS['eta_jer'] = dict({
+    "absEta_{:04d}_{:04d}".format(int(_lo*1e3), int(_hi*1e3)): dict(absjet1eta=(_lo, _hi))
+    for _lo, _hi in zip(_ETA_BIN_EDGES_JER[:-1], _ETA_BIN_EDGES_JER[1:])
+}, **{"absEta_all": dict(absjet1eta=(0, 5.191))})
 
 assert len(_ETA_BIN_EDGES_BARREL) == 2
 SPLITTINGS['eta'] = {"absEta_{:04d}_{:04d}".format(int(_ETA_BIN_EDGES_BARREL[0]*1e3),
@@ -297,4 +303,8 @@ SPLITTINGS['eta_wide_barrel'].update(SPLITTINGS['eta_wide'])
 SPLITTINGS['zpt'] = dict({
     "zpt_{:d}_{:d}".format(int(_lo), int(_hi)): dict(zpt=(_lo, _hi))
     for _lo, _hi in zip(_ZPT_BIN_EDGES[:-1], _ZPT_BIN_EDGES[1:])
+}, **{"zpt_gt_30": dict(zpt=(30, 100000))})
+SPLITTINGS['zpt_jer'] = dict({
+    "zpt_{:d}_{:d}".format(int(_lo), int(_hi)): dict(zpt=(_lo, _hi))
+    for _lo, _hi in zip(_ZPT_BIN_EDGES_JER[:-1], _ZPT_BIN_EDGES_JER[1:])
 }, **{"zpt_gt_30": dict(zpt=(30, 100000))})
