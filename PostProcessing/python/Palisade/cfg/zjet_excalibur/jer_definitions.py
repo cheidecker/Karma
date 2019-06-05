@@ -145,7 +145,7 @@ def get_gaussian_width(tobject):
     else:
         try:
             print(_new_tobject.GetBinCenter(1), _new_tobject.GetBinCenter(_new_tobject.GetNbinsX() - 1))
-            _fit = _new_tobject.Fit("gaus", "results", "goff", 0., 2.).Get()
+            _fit = _new_tobject.Fit("gaus", "S", "goff", 0., 2.).Get()
         except Exception as err:
             print('WARNING: ROOT error occured during Gaussian fit: {}'.format(err))
             _return_value = (0., 0.)
@@ -204,7 +204,7 @@ def get_logNormal_width(tobject):
         _fit_function.SetParLimits(1, 0.0001, 1.0)
         _fit_function.SetParLimits(2, 0.0001, 2.0)
         try:
-            _fit = _new_tobject.Fit("logNormal_fit", "results", "goff").Get()
+            _fit = _new_tobject.Fit("logNormal_fit", "S", "goff").Get()
         except Exception as err:
             print('WARNING: ROOT error occured during logNormal fit: {}'.format(err))
             _return_value = (0., 0.)
