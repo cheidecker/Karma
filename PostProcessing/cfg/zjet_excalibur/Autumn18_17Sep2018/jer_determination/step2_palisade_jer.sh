@@ -3,15 +3,16 @@
 # -- step 2: run Palisade to combine the "pre-combination" files to the full
 # combination files for submission to JEC
 
-plotting_truncated_rms=false
-plotting_truncated_Gaussian=false
-plotting_truncated_logNormal=false
-
 rootfiles_truncated_rms=false
 rootfiles_truncated_Gaussian=false
 rootfiles_truncated_logNormal=false
 
+plotting_truncated_rms=false
+plotting_truncated_Gaussian=false
+plotting_truncated_logNormal=false
+
 plotting_extrapolation=false
+
 rootfiles_extrapolation=false
 
 plotting_dependency=true
@@ -20,25 +21,30 @@ plotting_dependency_logNormal=true
 
 rootfiles_dependency=false
 
+# settings:
+DATA_VERSION='ABCD'
+JEC_VERSION='Autumn18_JECV8'
+
 if $rootfiles_truncated_rms; then
     echo "Saving truncated RMS results"
     echo "==================================="
 
     palisade.py task zjet_excalibur jer_rootfiles \
-        --basename-data 'JER_Binning_Data' \
+        --basename-data "JER_Binning_Data_${DATA_VERSION}" \
         --basename-mc 'JER_Binning_MC' \
-        --jec Autumn18_JECV5 \
+        --jec ${JEC_VERSION} \
         --sample 17Sep2018 \
         --corr-levels "L1L2Res" \
         --run-periods Run2018{ABCD} \
         --channel "mm"\
         --output-dir JER_truncated_RMS \
-        --root
+        --root \
+        --extraction-method "R"
 
 #    palisade.py task zjet_excalibur jer_rootfiles \
-#        --basename-data 'JER_Binning_Data' \
+#        --basename-data "JER_Binning_Data_${DATA_VERSION}" \
 #        --basename-mc 'JER_Binning_MC' \
-#        --jec Autumn18_JECV5 \
+#        --jec ${JEC_VERSION} \
 #        --sample 17Sep2018 \
 #        --corr-levels "L1L2Res" \
 #        --run-periods Run2018{ABCD} \
@@ -51,21 +57,22 @@ if $rootfiles_truncated_Gaussian; then
     echo "Saving truncated Gaussian results"
     echo "==================================="
 
-    palisade.py task zjet_excalibur jer_rootfiles_Gaussian \
-        --basename-data 'JER_Binning_Data' \
+    palisade.py task zjet_excalibur jer_rootfiles \
+        --basename-data "JER_Binning_Data_${DATA_VERSION}" \
         --basename-mc 'JER_Binning_MC' \
-        --jec Autumn18_JECV5 \
+        --jec ${JEC_VERSION} \
         --sample 17Sep2018 \
         --corr-levels "L1L2Res" \
         --run-periods Run2018{ABCD} \
         --channel "mm"\
-        --output-dir JER_truncated_Gaussian \
-        --root
+        --output-dir JER_truncated_Gaussian_fit \
+        --root \
+        --extraction-method "G"
 
 #    palisade.py task zjet_excalibur jer_rootfiles \
-#        --basename-data 'JER_Binning_Data' \
+#        --basename-data "JER_Binning_Data_${DATA_VERSION}" \
 #        --basename-mc 'JER_Binning_MC' \
-#        --jec Autumn18_JECV5 \
+#        --jec ${JEC_VERSION} \
 #        --sample 17Sep2018 \
 #        --corr-levels "L1L2Res" \
 #        --run-periods Run2018{ABCD} \
@@ -78,21 +85,22 @@ if $rootfiles_truncated_logNormal; then
     echo "Saving truncated logNormal results"
     echo "==================================="
 
-    palisade.py task zjet_excalibur jer_rootfiles_logNormal \
-        --basename-data 'JER_Binning_Data' \
+    palisade.py task zjet_excalibur jer_rootfiles \
+        --basename-data "JER_Binning_Data_${DATA_VERSION}" \
         --basename-mc 'JER_Binning_MC' \
-        --jec Autumn18_JECV5 \
+        --jec ${JEC_VERSION} \
         --sample 17Sep2018 \
         --corr-levels "L1L2Res" \
         --run-periods Run2018{ABCD} \
         --channel "mm"\
-        --output-dir JER_truncated_logNormal \
-        --root
+        --output-dir JER_truncated_LogNormal_fit \
+        --root \
+        --extraction-method "L"
 
 #    palisade.py task zjet_excalibur jer_rootfiles \
-#        --basename-data 'JER_Binning_Data' \
+#        --basename-data "JER_Binning_Data_${DATA_VERSION}" \
 #        --basename-mc 'JER_Binning_MC' \
-#        --jec Autumn18_JECV5 \
+#        --jec ${JEC_VERSION} \
 #        --sample 17Sep2018 \
 #        --corr-levels "L1L2Res" \
 #        --run-periods Run2018{ABCD} \
@@ -106,9 +114,9 @@ if $plotting_truncated_rms; then
     echo "==================================="
 
     palisade.py task zjet_excalibur jer_rootfiles \
-        --basename-data 'JER_Binning_Data' \
+        --basename-data "JER_Binning_Data_${DATA_VERSION}" \
         --basename-mc 'JER_Binning_MC' \
-        --jec Autumn18_JECV5 \
+        --jec ${JEC_VERSION} \
         --sample 17Sep2018 \
         --corr-levels "L1L2Res" \
         --run-periods Run2018{ABCD} \
@@ -116,9 +124,9 @@ if $plotting_truncated_rms; then
         --output-dir JER_truncated_RMS
 
 #    palisade.py task zjet_excalibur jer_rootfiles \
-#        --basename-data 'JER_Binning_Data' \
+#        --basename-data "JER_Binning_Data_${DATA_VERSION}" \
 #        --basename-mc 'JER_Binning_MC' \
-#        --jec Autumn18_JECV5 \
+#        --jec ${JEC_VERSION} \
 #        --sample 17Sep2018 \
 #        --corr-levels "L1L2Res" \
 #        --run-periods Run2018{ABCD} \
@@ -132,7 +140,7 @@ if $plotting_extrapolation; then
 
     palisade.py task zjet_excalibur jer_plot_extrapolation \
         --basename JER_truncated_RMS \
-        --jec Autumn18_JECV5 \
+        --jec ${JEC_VERSION} \
         --sample 17Sep2018 \
         --corr-level "L1L2Res" \
         --run-periods Run2018ABCD \
@@ -148,7 +156,7 @@ if $plotting_extrapolation; then
 
 #    palisade.py task zjet_excalibur jer_plot_extrapolation \
 #        --basename JER_truncated_RMS \
-#        --jec Autumn18_JECV5 \
+#        --jec ${JEC_VERSION} \
 #        --sample 17Sep2018 \
 #        --corr-level "L1L2Res" \
 #        --run-periods Run2018ABCD \
@@ -169,7 +177,7 @@ if $rootfiles_extrapolation; then
 
     palisade.py task zjet_excalibur jer_plot_extrapolation \
         --basename JER_truncated_RMS \
-        --jec Autumn18_JECV5 \
+        --jec ${JEC_VERSION} \
         --sample 17Sep2018 \
         --corr-level "L1L2Res" \
         --run-periods Run2018ABCD \
@@ -181,7 +189,7 @@ if $rootfiles_extrapolation; then
 
 #    palisade.py task zjet_excalibur jer_plot_extrapolation \
 #        --basename JER_truncated_RMS \
-#        --jec Autumn18_JECV5 \
+#        --jec ${JEC_VERSION} \
 #        --sample 17Sep2018 \
 #        --corr-level "L1L2Res" \
 #        --run-periods Run2018ABCD \
@@ -198,7 +206,7 @@ if $plotting_dependency; then
 
     palisade.py task zjet_excalibur jer_plot_dependency \
         --basename JER_truncated_RMS \
-        --jec Autumn18_JECV5 \
+        --jec ${JEC_VERSION} \
         --sample 17Sep2018 \
         --corr-level "L1L2Res" \
         --run-periods Run2018ABCD \
@@ -209,7 +217,7 @@ if $plotting_dependency; then
 
 #    palisade.py task zjet_excalibur jer_plot_dependency \
 #        --basename JER_truncated_RMS \
-#        --jec Autumn18_JECV5 \
+#        --jec ${JEC_VERSION} \
 #        --sample 17Sep2018 \
 #        --corr-level "L1L2Res" \
 #        --run-periods Run2018ABCD \
@@ -224,8 +232,8 @@ if $plotting_dependency_Gaussian; then
     echo "============================="
 
     palisade.py task zjet_excalibur jer_plot_dependency \
-        --basename JER_truncated_Gaussian \
-        --jec Autumn18_JECV5 \
+        --basename JER_truncated_Gaussian_fit \
+        --jec ${JEC_VERSION} \
         --sample 17Sep2018 \
         --corr-level "L1L2Res" \
         --run-periods Run2018ABCD \
@@ -236,7 +244,7 @@ if $plotting_dependency_Gaussian; then
 
 #    palisade.py task zjet_excalibur jer_plot_dependency \
 #        --basename JER_truncated_Gaussian \
-#        --jec Autumn18_JECV5 \
+#        --jec ${JEC_VERSION} \
 #        --sample 17Sep2018 \
 #        --corr-level "L1L2Res" \
 #        --run-periods Run2018ABCD \
@@ -251,8 +259,8 @@ if $plotting_dependency_logNormal; then
     echo "============================="
 
     palisade.py task zjet_excalibur jer_plot_dependency \
-        --basename JER_truncated_logNormal \
-        --jec Autumn18_JECV5 \
+        --basename JER_truncated_LogNormal_fit \
+        --jec ${JEC_VERSION} \
         --sample 17Sep2018 \
         --corr-level "L1L2Res" \
         --run-periods Run2018ABCD \
@@ -263,7 +271,7 @@ if $plotting_dependency_logNormal; then
 
 #    palisade.py task zjet_excalibur jer_plot_dependency \
 #        --basename JER_truncated_logNormal \
-#        --jec Autumn18_JECV5 \
+#        --jec ${JEC_VERSION} \
 #        --sample 17Sep2018 \
 #        --corr-level "L1L2Res" \
 #        --run-periods Run2018ABCD \
@@ -279,7 +287,7 @@ if $rootfiles_dependency; then
 
     palisade.py task zjet_excalibur jer_plot_dependency \
         --basename JER_truncated_RMS \
-        --jec Autumn18_JECV5 \
+        --jec ${JEC_VERSION} \
         --sample 17Sep2018 \
         --corr-level "L1L2Res" \
         --run-periods Run2018ABCD \
@@ -291,7 +299,7 @@ if $rootfiles_dependency; then
 
 #    palisade.py task zjet_excalibur jer_plot_dependency \
 #        --basename JER_truncated_RMS \
-#        --jec Autumn18_JECV5 \
+#        --jec ${JEC_VERSION} \
 #        --sample 17Sep2018 \
 #        --corr-level "L1L2Res" \
 #        --run-periods Run2018ABCD \
@@ -301,5 +309,3 @@ if $rootfiles_dependency; then
 ##         \
 ##        --test
 fi
-
-
