@@ -71,11 +71,13 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
         ],
     }
 
+    # Used Eta and pT binning extracted by key defined in SPLITTINGS
     eta_binning_name = "eta_jer"
     zpt_binning_name = "zpt_jer"
 
     # append '[name]' to format keys that correspond to above expansion keys
     output_format = output_format.format(
+        basename=basename,
         channel=channel,
         sample=sample_name,
         jec=jec_name,
@@ -96,16 +98,16 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
             'figures': [
                 {
                     # Eta dependency
-                    'filename': output_format.format(dependency='eta_dependency'),
+                    'filename': output_format.format(dependency='eta_dependency_{}'.format(_zpt_bin)),
                     'subplots': [
                         #  Eta dependency for MC
                         {
                             'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], "
                                           "{alpha_min}, {alpha_max})".format(
                                 hist_list=", ".join(["quadratic_subtraction({minuend},[{subtrahend}])".format(
-                                    minuend='"data:{zpt}/{eta}/ptbalance-mc"'.format(zpt="zpt_gt_30", eta=_k),
-                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt="zpt_gt_30", eta=_k),
-                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt="zpt_gt_30", eta=_k)
+                                    minuend='"data:{zpt}/{eta}/ptbalance-mc"'.format(zpt=_zpt_bin, eta=_k),
+                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_zpt_bin, eta=_k),
+                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_zpt_bin, eta=_k)
                                                           ]))
                                     for _k in SPLITTINGS[eta_binning_name]
                                     if _k is not "absEta_all"
@@ -130,9 +132,9 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                             'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], "
                                           "{alpha_min}, {alpha_max})".format(
                                 hist_list=", ".join(["quadratic_subtraction({minuend},[{subtrahend}])".format(
-                                    minuend='"data:{zpt}/{eta}/ptbalance-data"'.format(zpt="zpt_gt_30", eta=_k),
-                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt="zpt_gt_30", eta=_k),
-                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt="zpt_gt_30", eta=_k)
+                                    minuend='"data:{zpt}/{eta}/ptbalance-data"'.format(zpt=_zpt_bin, eta=_k),
+                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_zpt_bin, eta=_k),
+                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_zpt_bin, eta=_k)
                                                           ]))
                                     for _k in SPLITTINGS[eta_binning_name]
                                     if _k is not "absEta_all"
@@ -157,7 +159,7 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                             'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], "
                                           "{alpha_min}, {alpha_max})".format(
                                 hist_list=", ".join(["{minuend}".format(
-                                    minuend='"data:{zpt}/{eta}/jer-gen-mc"'.format(zpt="zpt_gt_30", eta=_k))
+                                    minuend='"data:{zpt}/{eta}/jer-gen-mc"'.format(zpt=_zpt_bin, eta=_k))
                                     for _k in SPLITTINGS[eta_binning_name]
                                     if _k is not "absEta_all"
                                 ]),
@@ -182,17 +184,17 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                                           "{alpha_min}, {alpha_max})/histogram_from_linear_extrapolation("
                                           "[{hist_list2}], [{bins_list}], {alpha_min}, {alpha_max})".format(
                                 hist_list=", ".join(["quadratic_subtraction({minuend},[{subtrahend}])".format(
-                                    minuend='"data:{zpt}/{eta}/ptbalance-data"'.format(zpt="zpt_gt_30", eta=_k),
-                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt="zpt_gt_30", eta=_k),
-                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt="zpt_gt_30", eta=_k)
+                                    minuend='"data:{zpt}/{eta}/ptbalance-data"'.format(zpt=_zpt_bin, eta=_k),
+                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_zpt_bin, eta=_k),
+                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_zpt_bin, eta=_k)
                                                           ]))
                                         for _k in SPLITTINGS[eta_binning_name]
                                         if _k is not "absEta_all"
                                     ]),
                                 hist_list2=", ".join(["quadratic_subtraction({minuend},[{subtrahend}])".format(
-                                    minuend='"data:{zpt}/{eta}/ptbalance-mc"'.format(zpt="zpt_gt_30", eta=_k),
-                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt="zpt_gt_30", eta=_k),
-                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt="zpt_gt_30", eta=_k)
+                                    minuend='"data:{zpt}/{eta}/ptbalance-mc"'.format(zpt=_zpt_bin, eta=_k),
+                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_zpt_bin, eta=_k),
+                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_zpt_bin, eta=_k)
                                                           ]))
                                     for _k in SPLITTINGS[eta_binning_name]
                                     if _k is not "absEta_all"
@@ -218,14 +220,14 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                                           "{alpha_min}, {alpha_max})/histogram_from_linear_extrapolation("
                                           "[{hist_list2}], [{bins_list}], {alpha_min}, {alpha_max})".format(
                                 hist_list=", ".join(["{minuend}".format(
-                                    minuend='"data:{zpt}/{eta}/jer-gen-mc"'.format(zpt="zpt_gt_30", eta=_k))
+                                    minuend='"data:{zpt}/{eta}/jer-gen-mc"'.format(zpt=_zpt_bin, eta=_k))
                                         for _k in SPLITTINGS[eta_binning_name]
                                         if _k is not "absEta_all"
                                     ]),
                                 hist_list2=", ".join(["quadratic_subtraction({minuend},[{subtrahend}])".format(
-                                    minuend='"data:{zpt}/{eta}/ptbalance-mc"'.format(zpt="zpt_gt_30", eta=_k),
-                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt="zpt_gt_30", eta=_k),
-                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt="zpt_gt_30", eta=_k)
+                                    minuend='"data:{zpt}/{eta}/ptbalance-mc"'.format(zpt=_zpt_bin, eta=_k),
+                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_zpt_bin, eta=_k),
+                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_zpt_bin, eta=_k)
                                                           ]))
                                     for _k in SPLITTINGS[eta_binning_name]
                                     if _k is not "absEta_all"
@@ -285,18 +287,23 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                              )),
                     ],
                     'upper_label': jec_name,
-                },{
+                } for _zpt_bin in SPLITTINGS[zpt_binning_name]
+                # Loop over all zpt bins and create eta dependency plot for each entry.
+                # "_zpt_bin" is zpt bin used for one eta dependency plot
+                # ("zpt_gt_30" includes all zpt bins -> full zpt range)
+            ] + [
+                {
                     # Zpt dependency
-                    'filename': output_format.format(dependency='zpt_dependency'),
+                    'filename': output_format.format(dependency='zpt_dependency_{}'.format(_eta_bin)),
                     'subplots': [
                         #  Zpt dependency for MC
                         {
                             'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], {alpha_min}, "
                                           "{alpha_max})".format(
                                 hist_list=", ".join(["quadratic_subtraction({minuend},[{subtrahend}])".format(
-                                    minuend='"data:{zpt}/{eta}/ptbalance-mc"'.format(zpt=_k, eta="absEta_all"),
-                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_k, eta="absEta_all"),
-                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_k, eta="absEta_all")
+                                    minuend='"data:{zpt}/{eta}/ptbalance-mc"'.format(zpt=_k, eta=_eta_bin),
+                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_k, eta=_eta_bin),
+                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_k, eta=_eta_bin)
                                                           ]))
                                     for _k in SPLITTINGS[zpt_binning_name]
                                     if _k is not "zpt_gt_30"
@@ -321,9 +328,9 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                             'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], {alpha_min}, "
                                           "{alpha_max})".format(
                                 hist_list=", ".join(["quadratic_subtraction({minuend},[{subtrahend}])".format(
-                                    minuend='"data:{zpt}/{eta}/ptbalance-data"'.format(zpt=_k, eta="absEta_all"),
-                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_k, eta="absEta_all"),
-                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_k, eta="absEta_all")
+                                    minuend='"data:{zpt}/{eta}/ptbalance-data"'.format(zpt=_k, eta=_eta_bin),
+                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_k, eta=_eta_bin),
+                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_k, eta=_eta_bin)
                                                           ]))
                                     for _k in SPLITTINGS[zpt_binning_name]
                                     if _k is not "zpt_gt_30"
@@ -348,7 +355,7 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                             'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], {alpha_min}, "
                                           "{alpha_max})".format(
                                 hist_list=", ".join(["{minuend}".format(
-                                    minuend='"data:{zpt}/{eta}/jer-gen-mc"'.format(zpt=_k, eta="absEta_all"))
+                                    minuend='"data:{zpt}/{eta}/jer-gen-mc"'.format(zpt=_k, eta=_eta_bin))
                                     for _k in SPLITTINGS[zpt_binning_name]
                                     if _k is not "zpt_gt_30"
                                     ]),
@@ -373,17 +380,17 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                                           "{alpha_max})/histogram_from_linear_extrapolation([{hist_list2}], "
                                           "[{bins_list}], {alpha_min}, {alpha_max})".format(
                                 hist_list=", ".join(["quadratic_subtraction({minuend},[{subtrahend}])".format(
-                                    minuend='"data:{zpt}/{eta}/ptbalance-data"'.format(zpt=_k, eta="absEta_all"),
-                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_k, eta="absEta_all"),
-                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_k, eta="absEta_all")
+                                    minuend='"data:{zpt}/{eta}/ptbalance-data"'.format(zpt=_k, eta=_eta_bin),
+                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_k, eta=_eta_bin),
+                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_k, eta=_eta_bin)
                                                           ]))
                                     for _k in SPLITTINGS[zpt_binning_name]
                                     if _k is not "zpt_gt_30"
                                     ]),
                                 hist_list2=", ".join(["quadratic_subtraction({minuend},[{subtrahend}])".format(
-                                    minuend='"data:{zpt}/{eta}/ptbalance-mc"'.format(zpt=_k,eta="absEta_all"),
-                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_k, eta="absEta_all"),
-                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_k, eta="absEta_all")
+                                    minuend='"data:{zpt}/{eta}/ptbalance-mc"'.format(zpt=_k,eta=_eta_bin),
+                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_k, eta=_eta_bin),
+                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_k, eta=_eta_bin)
                                                           ]))
                                     for _k in SPLITTINGS[zpt_binning_name]
                                     if _k is not "zpt_gt_30"
@@ -409,14 +416,14 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                                           "{alpha_max})/histogram_from_linear_extrapolation([{hist_list2}], "
                                           "[{bins_list}], {alpha_min}, {alpha_max})".format(
                                 hist_list=", ".join(["{minuend}".format(
-                                    minuend='"data:{zpt}/{eta}/jer-gen-mc"'.format(zpt=_k, eta="absEta_all"))
+                                    minuend='"data:{zpt}/{eta}/jer-gen-mc"'.format(zpt=_k, eta=_eta_bin))
                                     for _k in SPLITTINGS[zpt_binning_name]
                                     if _k is not "zpt_gt_30"
                                     ]),
                                 hist_list2=", ".join(["quadratic_subtraction({minuend},[{subtrahend}])".format(
-                                    minuend='"data:{zpt}/{eta}/ptbalance-mc"'.format(zpt=_k, eta="absEta_all"),
-                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_k, eta="absEta_all"),
-                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_k, eta="absEta_all")
+                                    minuend='"data:{zpt}/{eta}/ptbalance-mc"'.format(zpt=_k, eta=_eta_bin),
+                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_k, eta=_eta_bin),
+                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_k, eta=_eta_bin)
                                                           ]))
                                     for _k in SPLITTINGS[zpt_binning_name]
                                     if _k is not "zpt_gt_30"
@@ -476,7 +483,11 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                              )),
                     ],
                     'upper_label': jec_name,
-                },
+                } for _eta_bin in SPLITTINGS[eta_binning_name]
+                # Loop over all eta bins and create zpt dependency plot for each entry.
+                # "_eta_bin" is eta bin used for one zpt dependency plot
+                # ("absEta_all" includes all eta bins -> full eta region)
+
             ],
         })
     else:
@@ -491,9 +502,9 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                             'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], "
                                           "{alpha_min}, {alpha_max})".format(
                                 hist_list=", ".join(["quadratic_subtraction({minuend},[{subtrahend}])".format(
-                                    minuend='"data:{zpt}/{eta}/ptbalance-mc"'.format(zpt="zpt_gt_30", eta=_k),
-                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt="zpt_gt_30", eta=_k),
-                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt="zpt_gt_30", eta=_k)
+                                    minuend='"data:{zpt}/{eta}/ptbalance-mc"'.format(zpt=_zpt_bin, eta=_k),
+                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_zpt_bin, eta=_k),
+                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_zpt_bin, eta=_k)
                                                           ]))
                                     for _k in SPLITTINGS[eta_binning_name]
                                     if _k is not "absEta_all"
@@ -513,9 +524,9 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                             'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], "
                                           "{alpha_min}, {alpha_max})".format(
                                 hist_list=", ".join(["quadratic_subtraction({minuend},[{subtrahend}])".format(
-                                    minuend='"data:{zpt}/{eta}/ptbalance-mc"'.format(zpt=_k, eta="absEta_all"),
-                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_k, eta="absEta_all"),
-                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_k, eta="absEta_all")
+                                    minuend='"data:{zpt}/{eta}/ptbalance-mc"'.format(zpt=_k, eta=_eta_bin),
+                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_k, eta=_eta_bin),
+                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_k, eta=_eta_bin)
                                                           ]))
                                     for _k in SPLITTINGS[zpt_binning_name]
                                     if _k is not "zpt_gt_30"
@@ -560,8 +571,7 @@ def cli(argument_parser):
     argument_parser.add_argument('--basename', help="prefix of ROOT files containing histograms", required=True)
     # optional parameters
     argument_parser.add_argument('--output-format', help="format string indicating full path to output plot",
-                                 default='JER_Extrapolations_Z{channel}_{jec}_{sample}_{corr_level}/'
-                                         'JER_Extrapolations_Z{channel}_{jec}_{sample}_{corr_level}_{dependency}.pdf')
+                                 default='{basename}_Z{channel}_{jec}_{sample}_{corr_level}_{dependency}.pdf')
     argument_parser.add_argument('--root', help="Switch output to root files instead of plots ", dest='root',
                                  action='store_true')
 
@@ -592,7 +602,7 @@ def run(args):
             colors=(args.colors if args.colors else ['grey', 'royalblue', 'springgreen', 'forestgreen', 'orange']),
             basename=args.basename,
             output_format=(args.output_format if not args.root else
-                           '{basename}_Extrapolations_Z{channel}_{jec}_{sample}_{corr_level}.root'.format(basename=args.basename)),
+                           '{basename}_Z{channel}_{jec}_{sample}_{corr_level}_{dependency}.root'),
             root=(args.root if args.root else False)
         )
         if args.root:
