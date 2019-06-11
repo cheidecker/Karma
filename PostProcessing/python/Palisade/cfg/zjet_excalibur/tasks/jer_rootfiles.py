@@ -113,6 +113,9 @@ def get_config(channel, sample_name, jec_name, run_periods, corr_levels, basenam
         print('No valid extraction method found')
         raise ValueError
 
+    if run_periods is None:
+        pass
+
     # define truncation values for different channels
     _truncation = 98.5 if channel == 'mm' else 90.
     # _truncation = 98.5
@@ -142,214 +145,203 @@ def get_config(channel, sample_name, jec_name, run_periods, corr_levels, basenam
 
     if not root:
         return_value.update({
-            'figures': [{
-                'filename': output_format.replace('{plot_label}', 'JER_input_check_{}_{}'.format(_quantity,
-                                                                                                 _type)),
-                'subplots': [
-                    #
-                    dict(
-                        expression='{}'.format(build_expression(_type, alpha_folder='alpha_all',
-                                                                quantity_path='h_{}_weight'.format(_quantity))),
-                        label=r''.format(_quantity),
-                        plot_method='errorbar',
-                        color=_color,
-                        marker="o",
-                        marker_style="full",
-                        pad=0
-                    )
-                ],
-                'pad_spec': {
-                    'right': 0.95,
-                    'bottom': 0.15,
-                    'top': 0.925,
-                    'hspace': 0.075,
-                },
-                'pads': [
-                    # top pad
-                    {
-                        'height_share': 1,
-                        'x_range': [0., 2.] if _quantity is not 'zres' else [0.9, 1.1],
-                        'x_scale': 'linear',
-                        'x_label': r'{}'.format(_label),
-                        'y_label': r'Events',
-                        # 'y_range': (0., 0.3),
-                        # 'x_ticklabels': [],
-                        'y_scale': 'linear',
-                        'legend_kwargs': dict(loc='upper right'),
+            'figures': [
+                {
+                    'filename': output_format.replace('{plot_label}', 'JER_input_check_{}_{}'.format(_quantity,
+                                                                                                     _type)),
+                    'subplots': [
+                        #
+                        dict(
+                            expression='{}'.format(build_expression(_type, alpha_folder='alpha_all',
+                                                                    quantity_path='h_{}_weight'.format(_quantity))),
+                            label=r''.format(_quantity),
+                            plot_method='errorbar',
+                            color=_color,
+                            marker="o",
+                            marker_style="full",
+                            pad=0
+                        )
+                    ],
+                    'pad_spec': {
+                        'right': 0.95,
+                        'bottom': 0.15,
+                        'top': 0.925,
+                        'hspace': 0.075,
                     },
-                ],
-                'texts': [
-                    dict(xy=(.04, 1.015), text=LOOKUP_CHANNEL_LABEL.get(channel, channel), transform='axes',
-                         fontproperties=FontProperties(
-                             weight='bold',
-                             family='Nimbus Sans',
-                             size=16,
-                         )),
-                ],
-                'upper_label': jec_name,
-            } for _quantity, _color, _type, _label in zip(['ptbalance', 'ptbalance', 'zres', 'pli', 'genjer'],
-                                                          ['black', 'blue', 'forestgreen', 'springgreen', 'orange'],
-                                                          ['data', 'mc', 'mc', 'mc', 'mc'],
-                                                          ['p$_\mathrm{{T}}$-balance', 'p$_\mathrm{{T}}$-balance',
-                                                           'Z boson momentum resolution',
-                                                           'Particle level imbalance (PLI)',
-                                                           'generated jet momentum resolution'])
-                       ] + [
-                           {
-                               'filename': output_format.replace('{plot_label}', 'JER_truncation_scan_ptbalance'),
-                               'subplots': [
-                                               # ptbalance RMS resolution scan
-                                               dict(
-                                                   expression='truncated_rms_hist([{file_list}], [{x_bins}], {truncation})'.format(
-                                                       file_list=", ".join(
-                                                           [build_expression('mc', alpha_folder='alpha_all',
-                                                                             quantity_path='h_ptbalance_weight')]),
-                                                       x_bins=", ".join([x_bins]),
-                                                       truncation=_truncation
-                                                   ),
-                                                   label=r'ptbalance RMS',
-                                                   plot_method='errorbar',
-                                                   color='blue',
-                                                   marker="o",
-                                                   marker_style="full",
-                                                   pad=0
-                                               ) for _truncation, x_bins in zip(_truncation_values, _truncation_bins)
-                                           ] + [
-                                               # ptbalance Gaussian resolution scan
-                                               dict(
-                                                   expression='truncated_gaussian_width_hist([{file_list}], [{x_bins}], '
-                                                              '{truncation})'.format(
-                                                       file_list=", ".join(
-                                                           [build_expression('mc', alpha_folder='alpha_all',
-                                                                             quantity_path='h_ptbalance_weight')]),
-                                                       x_bins=", ".join([x_bins]),
-                                                       truncation=_truncation
-                                                   ),
-                                                   label=r'ptbalance Gaussian fit',
-                                                   plot_method='errorbar',
-                                                   color='grey',
-                                                   marker="o",
-                                                   marker_style="full",
-                                                   pad=0
-                                               ) for _truncation, x_bins in zip(_truncation_values, _truncation_bins)
-                                           ] + [
-                                               # ptbalance Ratio plot RMS/Gaussian
-                                               dict(
-                                                   expression='truncated_rms_hist([{file_list}], [{x_bins}], {truncation})/'
-                                                              'truncated_gaussian_width_hist([{file_list}], [{x_bins}], '
-                                                              '{truncation})'.format(
-                                                       file_list=", ".join(
-                                                           [build_expression('mc', alpha_folder='alpha_all',
-                                                                             quantity_path='h_ptbalance_weight')]),
-                                                       x_bins=", ".join([x_bins]),
-                                                       truncation=_truncation
-                                                   ),
-                                                   label=r'',
-                                                   plot_method='errorbar',
-                                                   color='blue',
-                                                   marker="o",
-                                                   marker_style="full",
-                                                   pad=1
-                                               ) for _truncation, x_bins in zip(_truncation_values, _truncation_bins)
-                                           ],
-                               'pad_spec': {
-                                   'right': 0.95,
-                                   'bottom': 0.15,
-                                   'top': 0.925,
-                                   'hspace': 0.075,
-                               },
-                               'pads': [
-                                   # top pad
-                                   {
-                                       'height_share': 3,
-                                       'x_range': [min(_truncation_binning), max(_truncation_binning)],
-                                       'x_scale': 'linear',
-                                       'y_label': r'Resolution',
-                                       # 'y_range': (0., 0.3),
-                                       'x_ticklabels': [],
-                                       'y_scale': 'linear',
-                                       'legend_kwargs': dict(loc='upper left'),
-                                   },
-                                   # ratio pad
-                                   {
-                                       'height_share': 1,
-                                       'x_label': r'truncation',
-                                       'x_range': [min(_truncation_binning), max(_truncation_binning)],
-                                       'x_scale': 'linear',
-                                       'y_label': 'RMS/Gaussian',
-                                       'y_range': ratio_range,
-                                       'axhlines': [dict(values=[1.0])],
-                                       'y_scale': 'linear',
-                                       'legend_kwargs': dict(loc='upper right'),
-                                   },
-                               ],
-                               'texts': [
-                                   dict(xy=(.04, 1.015), text=LOOKUP_CHANNEL_LABEL.get(channel, channel),
-                                        transform='axes',
-                                        fontproperties=FontProperties(
-                                            weight='bold',
-                                            family='Nimbus Sans',
-                                            size=16,
-                                        )),
-                               ],
-                               'upper_label': jec_name,
-                           }, {
+                    'pads': [
+                        # top pad
+                        {
+                            'height_share': 1,
+                            'x_range': [0., 2.] if _quantity is not 'zres' else [0.9, 1.1],
+                            'x_scale': 'linear',
+                            'x_label': r'{}'.format(_label),
+                            'y_label': r'Events',
+                            # 'y_range': (0., 0.3),
+                            # 'x_ticklabels': [],
+                            'y_scale': 'linear',
+                            'legend_kwargs': dict(loc='upper right'),
+                        },
+                    ],
+                    'texts': [
+                        dict(xy=(.04, 1.015), text=LOOKUP_CHANNEL_LABEL.get(channel, channel), transform='axes',
+                             fontproperties=FontProperties(
+                                 weight='bold',
+                                 family='Nimbus Sans',
+                                 size=16,
+                             )),
+                    ],
+                    'upper_label': jec_name,
+                } for _quantity, _color, _type, _label in zip(['ptbalance', 'ptbalance', 'zres', 'pli', 'genjer'],
+                                                              ['black', 'blue', 'forestgreen', 'springgreen', 'orange'],
+                                                              ['data', 'mc', 'mc', 'mc', 'mc'],
+                                                              ['p$_\mathrm{{T}}$-balance', 'p$_\mathrm{{T}}$-balance',
+                                                               'Z boson momentum resolution',
+                                                               'Particle level imbalance (PLI)',
+                                                               'generated jet momentum resolution'])
+            ] + [
+                {
+                    'filename': output_format.replace('{plot_label}', 'JER_truncation_scan_ptbalance'),
+                    'subplots': [
+                        # ptbalance RMS resolution scan
+                        dict(
+                            expression='truncated_rms_hist([{file_list}], [{x_bins}], {truncation})'.format(
+                                file_list=", ".join([build_expression('mc', alpha_folder='alpha_all',
+                                                    quantity_path='h_ptbalance_weight')]),
+                                x_bins=", ".join([x_bins]),
+                                truncation=_truncation
+                            ),
+                            label=r'ptbalance RMS',
+                            plot_method='errorbar',
+                            color='blue',
+                            marker="o",
+                            marker_style="full",
+                            pad=0
+                        ) for _truncation, x_bins in zip(_truncation_values, _truncation_bins)
+                    ] + [
+                        # ptbalance Gaussian resolution scan
+                        dict(
+                            expression='truncated_gaussian_width_hist([{file_list}], [{x_bins}], {truncation})'.format(
+                                file_list=", ".join([build_expression('mc', alpha_folder='alpha_all',
+                                                    quantity_path='h_ptbalance_weight')]),
+                                x_bins=", ".join([x_bins]),
+                                truncation=_truncation
+                            ),
+                            label=r'ptbalance Gaussian fit',
+                            plot_method='errorbar',
+                            color='grey',
+                            marker="o",
+                            marker_style="full",
+                            pad=0
+                        ) for _truncation, x_bins in zip(_truncation_values, _truncation_bins)
+                    ] + [
+                        # ptbalance Ratio plot RMS/Gaussian
+                        dict(
+                            expression='truncated_rms_hist([{file_list}], [{x_bins}], {truncation})/'
+                                       'truncated_gaussian_width_hist([{file_list}], [{x_bins}], '
+                                       '{truncation})'.format(
+                                file_list=", ".join([build_expression('mc', alpha_folder='alpha_all',
+                                                    quantity_path='h_ptbalance_weight')]),
+                                x_bins=", ".join([x_bins]),
+                                truncation=_truncation
+                            ),
+                            label=r'',
+                            plot_method='errorbar',
+                            color='blue',
+                            marker="o",
+                            marker_style="full",
+                            pad=1
+                        ) for _truncation, x_bins in zip(_truncation_values, _truncation_bins)
+                    ],
+                    'pad_spec': {
+                       'right': 0.95,
+                       'bottom': 0.15,
+                       'top': 0.925,
+                       'hspace': 0.075,
+                        },
+                    'pads': [
+                        # top pad
+                        {
+                            'height_share': 3,
+                            'x_range': [min(_truncation_binning), max(_truncation_binning)],
+                            'x_scale': 'linear',
+                            'y_label': r'Resolution',
+                            # 'y_range': (0., 0.3),
+                            'x_ticklabels': [],
+                            'y_scale': 'linear',
+                            'legend_kwargs': dict(loc='upper left'),
+                        },
+                        # ratio pad
+                        {
+                           'height_share': 1,
+                           'x_label': r'truncation',
+                           'x_range': [min(_truncation_binning), max(_truncation_binning)],
+                           'x_scale': 'linear',
+                           'y_label': 'RMS/Gaussian',
+                           'y_range': ratio_range,
+                           'axhlines': [dict(values=[1.0])],
+                           'y_scale': 'linear',
+                           'legend_kwargs': dict(loc='upper right'),
+                        },
+                    ],
+                    'texts': [
+                        dict(xy=(.04, 1.015), text=LOOKUP_CHANNEL_LABEL.get(channel, channel), transform='axes',
+                             fontproperties=FontProperties(weight='bold', family='Nimbus Sans', size=16)),
+                    ],
+                    'upper_label': jec_name,
+                }, {
                     'filename': output_format.replace('{plot_label}', 'JER_truncation_scan_zres'),
                     'subplots':
-                        [
-                            # zres RMS resolution scan
-                            dict(
-                                expression='truncated_rms_hist([{file_list}], [{x_bins}], {truncation})'.format(
-                                    file_list=", ".join([build_expression('mc', alpha_folder='alpha_all',
-                                                                          quantity_path='h_zres_weight')]),
-                                    x_bins=", ".join([x_bins]),
-                                    truncation=_truncation
-                                ),
-                                label=r'Z-Res RMS',
-                                plot_method='errorbar',
-                                color='forestgreen',
-                                marker="o",
-                                marker_style="full",
-                                pad=0
-                            ) for _truncation, x_bins in zip(_truncation_values, _truncation_bins)
-                        ] + [
-
-                            # zres Gaussian resolution scan
-                            dict(
-                                expression='truncated_gaussian_width_hist([{file_list}], [{x_bins}], '
-                                           '{truncation})'.format(
-                                    file_list=", ".join([build_expression('mc', alpha_folder='alpha_all',
-                                                                          quantity_path='h_zres_weight')]),
-                                    x_bins=", ".join([x_bins]),
-                                    truncation=_truncation
-                                ),
-                                label=r'Z-Res Gaussian fit',
-                                plot_method='errorbar',
-                                color='grey',
-                                marker="o",
-                                marker_style="full",
-                                pad=0
-                            ) for _truncation, x_bins in zip(_truncation_values, _truncation_bins)
-                        ] + [
-
-                            # zres Ratio plot RMS/Gaussian
-                            dict(
-                                expression='truncated_rms_hist([{file_list}], [{x_bins}], {truncation})/'
-                                           'truncated_gaussian_width_hist([{file_list}], [{x_bins}], '
-                                           '{truncation})'.format(
-                                    file_list=", ".join([build_expression('mc', alpha_folder='alpha_all',
-                                                                          quantity_path='h_zres_weight')]),
-                                    x_bins=", ".join([x_bins]),
-                                    truncation=_truncation
-                                ),
-                                label=r'',
-                                plot_method='errorbar',
-                                color='forestgreen',
-                                marker="o",
-                                marker_style="full",
-                                pad=1
-                            ) for _truncation, x_bins in zip(_truncation_values, _truncation_bins)
-                        ],
+                    [
+                        # zres RMS resolution scan
+                        dict(
+                            expression='truncated_rms_hist([{file_list}], [{x_bins}], {truncation})'.format(
+                                file_list=", ".join([build_expression('mc', alpha_folder='alpha_all',
+                                                                      quantity_path='h_zres_weight')]),
+                                x_bins=", ".join([x_bins]),
+                                truncation=_truncation
+                            ),
+                            label=r'Z-Res RMS',
+                            plot_method='errorbar',
+                            color='forestgreen',
+                            marker="o",
+                            marker_style="full",
+                            pad=0
+                        ) for _truncation, x_bins in zip(_truncation_values, _truncation_bins)
+                    ] + [
+                        # zres Gaussian resolution scan
+                        dict(
+                            expression='truncated_gaussian_width_hist([{file_list}], [{x_bins}], {truncation})'.format(
+                                file_list=", ".join([build_expression('mc', alpha_folder='alpha_all',
+                                                                      quantity_path='h_zres_weight')]),
+                                x_bins=", ".join([x_bins]),
+                                truncation=_truncation
+                            ),
+                            label=r'Z-Res Gaussian fit',
+                            plot_method='errorbar',
+                            color='grey',
+                            marker="o",
+                            marker_style="full",
+                            pad=0
+                        ) for _truncation, x_bins in zip(_truncation_values, _truncation_bins)
+                    ] + [
+                        # zres Ratio plot RMS/Gaussian
+                        dict(
+                            expression='truncated_rms_hist([{file_list}], [{x_bins}], {truncation})/'
+                                       'truncated_gaussian_width_hist([{file_list}], [{x_bins}], '
+                                       '{truncation})'.format(
+                                file_list=", ".join([build_expression('mc', alpha_folder='alpha_all',
+                                                                      quantity_path='h_zres_weight')]),
+                                x_bins=", ".join([x_bins]),
+                                truncation=_truncation
+                            ),
+                            label=r'',
+                            plot_method='errorbar',
+                            color='forestgreen',
+                            marker="o",
+                            marker_style="full",
+                            pad=1
+                        ) for _truncation, x_bins in zip(_truncation_values, _truncation_bins)
+                    ],
                     'pad_spec': {
                         'right': 0.95,
                         'bottom': 0.15,
@@ -388,7 +380,7 @@ def get_config(channel, sample_name, jec_name, run_periods, corr_levels, basenam
                                  family='Nimbus Sans',
                                  size=16,
                              )),
-                    ],
+                        ],
                     'upper_label': jec_name,
                 }, {
                     'filename': output_format.replace('{plot_label}', 'JER_truncation_scan_pli'),
@@ -593,96 +585,96 @@ def get_config(channel, sample_name, jec_name, run_periods, corr_levels, basenam
                 {
                     "filename": output_format,
                     'subtasks': [
-                                    # pT-balance from Data
-                                    {
-                                        'expression': '{extraction_function}([{file_list}], [{x_bins}], {truncation})'.format(
-                                            extraction_function=_extraction_function,
-                                            file_list=", ".join([
-                                                build_expression(source_type='data', alpha_folder=_k,
-                                                                 quantity_path='h_ptbalance_weight')
-                                                for _k in SPLITTINGS['alpha_exclusive'] if _k is not "alpha_all"
-                                            ]),
-                                            x_bins=", ".join(["[{}, {}]".format(_v["alpha"][0], _v["alpha"][1])
-                                                              for _k, _v in SPLITTINGS['alpha_exclusive'].iteritems()
-                                                              if _k is not "alpha_all"
-                                                              ]),
-                                            truncation=_truncation
-                                        ),
-                                        'output_path': '{zpt[name]}/{eta[name]}/ptbalance-data'
-                                    }
-                                ] + [
-                                    # pT-balance from MC
-                                    {
-                                        'expression': '{extraction_function}([{file_list}], [{x_bins}], {truncation})'.format(
-                                            extraction_function=_extraction_function,
-                                            file_list=", ".join([
-                                                build_expression(source_type='mc', alpha_folder=_k,
-                                                                 quantity_path='h_ptbalance_weight')
-                                                for _k in SPLITTINGS['alpha_exclusive'] if _k is not "alpha_all"
-                                            ]),
-                                            x_bins=", ".join(["[{}, {}]".format(_v["alpha"][0], _v["alpha"][1])
-                                                              for _k, _v in SPLITTINGS['alpha_exclusive'].iteritems() if
-                                                              _k is not "alpha_all"
-                                                              ]),
-                                            truncation=_truncation
-                                        ),
-                                        'output_path': '{zpt[name]}/{eta[name]}/ptbalance-mc'
-                                    }
-                                ] + [
-                                    # PLI from MC
-                                    {
-                                        'expression': '{extraction_function}([{file_list}], [{x_bins}], {truncation})'.format(
-                                            extraction_function=_extraction_function,
-                                            file_list=", ".join([
-                                                build_expression(source_type='mc', alpha_folder=_k,
-                                                                 quantity_path='h_pli_weight')
-                                                for _k in SPLITTINGS['alpha_exclusive'] if _k is not "alpha_all"
-                                            ]),
-                                            x_bins=", ".join(["[{}, {}]".format(_v["alpha"][0], _v["alpha"][1])
-                                                              for _k, _v in SPLITTINGS['alpha_exclusive'].iteritems() if
-                                                              _k is not "alpha_all"
-                                                              ]),
-                                            truncation=_truncation
-                                        ),
-                                        'output_path': '{zpt[name]}/{eta[name]}/pli-mc'
-                                    }
-                                ] + [
-                                    # Z-Res from MC
-                                    {
-                                        'expression': '{extraction_function}([{file_list}], [{x_bins}], {truncation})'.format(
-                                            extraction_function=_extraction_function,
-                                            file_list=", ".join([
-                                                build_expression(source_type='mc', alpha_folder=_k,
-                                                                 quantity_path='h_zres_weight')
-                                                for _k in SPLITTINGS['alpha_exclusive'] if _k is not "alpha_all"
-                                            ]),
-                                            x_bins=", ".join(["[{}, {}]".format(_v["alpha"][0], _v["alpha"][1])
-                                                              for _k, _v in SPLITTINGS['alpha_exclusive'].iteritems() if
-                                                              _k is not "alpha_all"
-                                                              ]),
-                                            truncation=_truncation
-                                        ),
-                                        'output_path': '{zpt[name]}/{eta[name]}/zres-mc'
-                                    }
-                                ] + [
-                                    # generated JER from MC
-                                    {
-                                        'expression': '{extraction_function}([{file_list}], [{x_bins}], {truncation})'.format(
-                                            extraction_function=_extraction_function,
-                                            file_list=", ".join([
-                                                build_expression(source_type='mc', alpha_folder=_k,
-                                                                 quantity_path='h_genjer_weight')
-                                                for _k in SPLITTINGS['alpha_exclusive'] if _k is not "alpha_all"
-                                            ]),
-                                            x_bins=", ".join(["[{}, {}]".format(_v["alpha"][0], _v["alpha"][1])
-                                                              for _k, _v in SPLITTINGS['alpha_exclusive'].iteritems() if
-                                                              _k is not "alpha_all"
-                                                              ]),
-                                            truncation=_truncation
-                                        ),
-                                        'output_path': '{zpt[name]}/{eta[name]}/jer-gen-mc'
-                                    }
-                                ],
+                        # pT-balance from Data
+                        {
+                            'expression': '{extraction_function}([{file_list}], [{x_bins}], {truncation})'.format(
+                                extraction_function=_extraction_function,
+                                file_list=", ".join([
+                                    build_expression(source_type='data', alpha_folder=_k,
+                                                     quantity_path='h_ptbalance_weight')
+                                    for _k in SPLITTINGS['alpha_exclusive'] if _k is not "alpha_all"
+                                ]),
+                                x_bins=", ".join(["[{}, {}]".format(_v["alpha"][0], _v["alpha"][1])
+                                                  for _k, _v in SPLITTINGS['alpha_exclusive'].iteritems()
+                                                  if _k is not "alpha_all"
+                                                  ]),
+                                truncation=_truncation
+                            ),
+                            'output_path': '{zpt[name]}/{eta[name]}/ptbalance-data'
+                        }
+                    ] + [
+                        # pT-balance from MC
+                        {
+                            'expression': '{extraction_function}([{file_list}], [{x_bins}], {truncation})'.format(
+                                extraction_function=_extraction_function,
+                                file_list=", ".join([
+                                    build_expression(source_type='mc', alpha_folder=_k,
+                                                     quantity_path='h_ptbalance_weight')
+                                    for _k in SPLITTINGS['alpha_exclusive'] if _k is not "alpha_all"
+                                ]),
+                                x_bins=", ".join(["[{}, {}]".format(_v["alpha"][0], _v["alpha"][1])
+                                                  for _k, _v in SPLITTINGS['alpha_exclusive'].iteritems() if
+                                                  _k is not "alpha_all"
+                                                  ]),
+                                truncation=_truncation
+                            ),
+                            'output_path': '{zpt[name]}/{eta[name]}/ptbalance-mc'
+                        }
+                    ] + [
+                        # PLI from MC
+                        {
+                            'expression': '{extraction_function}([{file_list}], [{x_bins}], {truncation})'.format(
+                                extraction_function=_extraction_function,
+                                file_list=", ".join([
+                                    build_expression(source_type='mc', alpha_folder=_k,
+                                                     quantity_path='h_pli_weight')
+                                    for _k in SPLITTINGS['alpha_exclusive'] if _k is not "alpha_all"
+                                ]),
+                                x_bins=", ".join(["[{}, {}]".format(_v["alpha"][0], _v["alpha"][1])
+                                                  for _k, _v in SPLITTINGS['alpha_exclusive'].iteritems() if
+                                                  _k is not "alpha_all"
+                                                  ]),
+                                truncation=_truncation
+                            ),
+                            'output_path': '{zpt[name]}/{eta[name]}/pli-mc'
+                        }
+                    ] + [
+                        # Z-Res from MC
+                        {
+                            'expression': '{extraction_function}([{file_list}], [{x_bins}], {truncation})'.format(
+                                extraction_function=_extraction_function,
+                                file_list=", ".join([
+                                    build_expression(source_type='mc', alpha_folder=_k,
+                                                     quantity_path='h_zres_weight')
+                                    for _k in SPLITTINGS['alpha_exclusive'] if _k is not "alpha_all"
+                                ]),
+                                x_bins=", ".join(["[{}, {}]".format(_v["alpha"][0], _v["alpha"][1])
+                                                  for _k, _v in SPLITTINGS['alpha_exclusive'].iteritems() if
+                                                  _k is not "alpha_all"
+                                                  ]),
+                                truncation=_truncation
+                            ),
+                            'output_path': '{zpt[name]}/{eta[name]}/zres-mc'
+                        }
+                    ] + [
+                        # generated JER from MC
+                        {
+                            'expression': '{extraction_function}([{file_list}], [{x_bins}], {truncation})'.format(
+                                extraction_function=_extraction_function,
+                                file_list=", ".join([
+                                    build_expression(source_type='mc', alpha_folder=_k,
+                                                     quantity_path='h_genjer_weight')
+                                    for _k in SPLITTINGS['alpha_exclusive'] if _k is not "alpha_all"
+                                ]),
+                                x_bins=", ".join(["[{}, {}]".format(_v["alpha"][0], _v["alpha"][1])
+                                                  for _k, _v in SPLITTINGS['alpha_exclusive'].iteritems() if
+                                                  _k is not "alpha_all"
+                                                  ]),
+                                truncation=_truncation
+                            ),
+                            'output_path': '{zpt[name]}/{eta[name]}/jer-gen-mc'
+                        }
+                    ],
                 }
             ],
         })
@@ -713,7 +705,8 @@ def cli(argument_parser):
     # optional parameters
     argument_parser.add_argument('--output-format',
                                  help="format string defining name of output ROOT files. Default: '{%(default)s}'",
-                                 default='JER_truncated_{extraction_method}_Z{channel}_{sample}_{jec}_{corr_level}/{plot_label}.pdf')
+                                 default='JER_truncated_{extraction_method}_Z{channel}_{sample}_{jec}_{corr_level}/'
+                                         '{plot_label}.pdf')
     argument_parser.add_argument('--root', help="Switch output to root files instead of plots ", dest='root',
                                  action='store_true')
     argument_parser.add_argument('--extraction-method',

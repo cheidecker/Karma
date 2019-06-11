@@ -87,6 +87,9 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
         **{_expansion_key: "{{{0}[name]}}".format(_expansion_key) for _expansion_key in _expansions.keys()}
     )
 
+    if run_periods is None or quantities is None or colors is None:
+        pass
+
     return_value = {
         'input_files': _input_files,
         'expansions': _expansions
@@ -298,8 +301,8 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                     'subplots': [
                         #  Zpt dependency for MC
                         {
-                            'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], {alpha_min}, "
-                                          "{alpha_max})".format(
+                            'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], "
+                                          "{alpha_min}, {alpha_max})".format(
                                 hist_list=", ".join(["quadratic_subtraction({minuend},[{subtrahend}])".format(
                                     minuend='"data:{zpt}/{eta}/ptbalance-mc"'.format(zpt=_k, eta=_eta_bin),
                                     subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_k, eta=_eta_bin),
@@ -325,8 +328,8 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                     ] + [
                         #  Zpt dependency for data
                         {
-                            'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], {alpha_min}, "
-                                          "{alpha_max})".format(
+                            'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], "
+                                          "{alpha_min}, {alpha_max})".format(
                                 hist_list=", ".join(["quadratic_subtraction({minuend},[{subtrahend}])".format(
                                     minuend='"data:{zpt}/{eta}/ptbalance-data"'.format(zpt=_k, eta=_eta_bin),
                                     subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_k, eta=_eta_bin),
@@ -352,8 +355,8 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                     ] + [
                         #  Zpt dependency for MC JER generated
                         {
-                            'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], {alpha_min}, "
-                                          "{alpha_max})".format(
+                            'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], "
+                                          "{alpha_min}, {alpha_max})".format(
                                 hist_list=", ".join(["{minuend}".format(
                                     minuend='"data:{zpt}/{eta}/jer-gen-mc"'.format(zpt=_k, eta=_eta_bin))
                                     for _k in SPLITTINGS[zpt_binning_name]
@@ -376,9 +379,9 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                     ] + [
                         #  Zpt dependency ratio plot Data/MC
                         {
-                            'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], {alpha_min}, "
-                                          "{alpha_max})/histogram_from_linear_extrapolation([{hist_list2}], "
-                                          "[{bins_list}], {alpha_min}, {alpha_max})".format(
+                            'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], "
+                                          "{alpha_min}, {alpha_max})/histogram_from_linear_extrapolation("
+                                          "[{hist_list2}], [{bins_list}], {alpha_min}, {alpha_max})".format(
                                 hist_list=", ".join(["quadratic_subtraction({minuend},[{subtrahend}])".format(
                                     minuend='"data:{zpt}/{eta}/ptbalance-data"'.format(zpt=_k, eta=_eta_bin),
                                     subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_k, eta=_eta_bin),
@@ -412,9 +415,9 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                     ] + [
                         #  Zpt dependency ratio plot gen/reco
                         {
-                            'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], {alpha_min}, "
-                                          "{alpha_max})/histogram_from_linear_extrapolation([{hist_list2}], "
-                                          "[{bins_list}], {alpha_min}, {alpha_max})".format(
+                            'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], "
+                                          "{alpha_min}, {alpha_max})/histogram_from_linear_extrapolation("
+                                          "[{hist_list2}], [{bins_list}], {alpha_min}, {alpha_max})".format(
                                 hist_list=", ".join(["{minuend}".format(
                                     minuend='"data:{zpt}/{eta}/jer-gen-mc"'.format(zpt=_k, eta=_eta_bin))
                                     for _k in SPLITTINGS[zpt_binning_name]
@@ -495,7 +498,7 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
             'input_files': _input_files,
             'tasks': [
                 {
-                    'filename': output_format,
+                    'filename': output_format.format(dependency='dependency'),
                     'subtasks': [
                         #  Eta dependency
                         {
@@ -516,8 +519,11 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                                 alpha_min="{}".format(alpha_min),
                                 alpha_max="{}".format(alpha_max)
                                 ),
-                            'output_path': 'jer_extracted_mc_eta_dependency'
-                        }
+                            'output_path': 'jer_extracted_mc_eta_dependency_{}'.format(_zpt_bin)
+                        } for _zpt_bin in SPLITTINGS[zpt_binning_name]
+                        # Loop over all zpt bins and create eta dependency plot for each entry.
+                        # "_zpt_bin" is zpt bin used for one eta dependency plot
+                        # ("zpt_gt_30" includes all zpt bins -> full zpt range)
                     ] + [
                         #  pT dependency
                         {
@@ -538,8 +544,11 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                                 alpha_min="{}".format(alpha_min),
                                 alpha_max="{}".format(alpha_max)
                                 ),
-                            'output_path': 'jer_extracted_mc_zpt_dependency'
-                        }
+                            'output_path': 'jer_extracted_mc_zpt_dependency_{}'.format(_zpt_bin)
+                        } for _eta_bin in SPLITTINGS[eta_binning_name]
+                        # Loop over all eta bins and create zpt dependency plot for each entry.
+                        # "_eta_bin" is eta bin used for one zpt dependency plot
+                        # ("absEta_all" includes all eta bins -> full eta region)
                     ],
                 },
             ],

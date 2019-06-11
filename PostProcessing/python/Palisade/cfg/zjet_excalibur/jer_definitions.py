@@ -301,7 +301,28 @@ def quadratic_subtraction(minuend_tobject, subtrahend_tobjects):
 
 
 @InputROOT.add_function
-def histogram_from_linear_extrapolation(tobjects, x_bins, x_min,x_max):
+def poly1_fit(tobject, x_min, x_max):
+    # new_tobject = _ROOTObjectFunctions._project_or_clone(tobject, "e")
+    if len(root_numpy.hist2array(tobject, include_overflow=False, copy=True, return_edges=False)[:-1]) < 3:
+        print("WARNING: Skipping histogram due to low statistic! Setting bin to zero!")
+        _parameter = [0, 0]
+        _parameter_errors = [0, 0]
+        skip = True
+    else:
+        _fit = ROOT.TF1('fit_function', "[0]+[1]*x", x_min, x_max)
+        _fit.SetParameters(0., 0.)
+        _fit.SetParNames("m", "c")
+        # fit.SetParLimits(0, 1. - 0.01 * 1., 1. + 0.01 * 1.)
+        # fit.SetParLimits(1, 1. - 0.01 * 1., 1. + 0.01 * 1.)
+        tobject.Fit(_fit, '', '', x_min, x_max)
+        _parameter = _fit.GetParameters()
+        _parameter_errors = _fit.GetParErrors()
+        skip = False
+    return skip, _parameter, _parameter_errors
+
+
+@InputROOT.add_function
+def histogram_from_linear_extrapolation(tobjects, x_bins, x_min, x_max):
     """
     :param tobjects:
     :param x_bins:
@@ -314,7 +335,6 @@ def histogram_from_linear_extrapolation(tobjects, x_bins, x_min,x_max):
     x_binning = [min([x[0] for x in x_bins])] + sorted([x[1] for x in x_bins])
     # x_min = min([x[0] for x in x_bins])
     # x_max = max([x[1] for x in x_bins])
-    print(x_min, x_max)
     # clone tobjects to avoid data corruption
     _tobjects = []
     for _tobject in tobjects:
@@ -326,21 +346,32 @@ def histogram_from_linear_extrapolation(tobjects, x_bins, x_min,x_max):
     # Fit function to each histogram
     for index, (_tobject, x_bin) in enumerate(zip(_tobjects, x_bins)):
         _bin_index = _x_axis.FindBin((x_bin[0]+x_bin[1])/2.)
-        if len(root_numpy.hist2array(_tobject, include_overflow=False, copy=True, return_edges=False)[:-1]) < 3:
-            print("WARNING: Skipping histogram due to low statistic! Setting bin to zero!")
-            _parameter = 0.
-            _parameter_errors = 0.
-        else:
-            _fit = ROOT.TF1('fit_function', "[0]+[1]*x", x_min, x_max)
-            _fit.SetParameters(0., 0.)
-            _fit.SetParNames("m", "c")
-            # fit.SetParLimits(0, 1. - 0.01 * 1., 1. + 0.01 * 1.)
-            # fit.SetParLimits(1, 1. - 0.01 * 1., 1. + 0.01 * 1.)
-            _tobject.Fit(_fit, '', '', x_min, x_max)
-            _parameters = _fit.GetParameters()[0]
-            _parameter_errors = _fit.GetParErrors()[0]
-            # Fill RMS values into new histogram
-        _new_tobject.SetBinContent(_bin_index, _parameters)
-        _new_tobject.SetBinError(_bin_index, _parameter_errors)
-        print('Linear extrapolation to {} +/- {}'.format(_parameters, _parameter_errors))
+        skip, _parameter, _parameter_errors = poly1_fit(_tobject, x_min, x_max)
+        _new_tobject.SetBinContent(_bin_index, _parameter[0])
+        _new_tobject.SetBinError(_bin_index, _parameter_errors[0])
+        print('Linear extrapolation to {} +/- {}'.format(_parameter[0], _parameter_errors[0]))
     return asrootpy(_new_tobject)
+
+@InputROOT.add_function
+def hist_of_poly1_fit(tobject, x_min, x_max):
+    _tobject = _ROOTObjectFunctions._project_or_clone(tobject, "e")
+    # _fit_tobject, _fit, _parameter, _parameter_errors = poly1_fit(_tobject, x_min, x_max)
+
+    # confidence interval
+    sampling_points = 100
+    _confidence_interval = ROOT.TGraphErrors(sampling_points)
+    for _bin_index, x_value in enumerate(np.arange(x_min, x_max, (float(x_max) - float(x_min)) / sampling_points)):
+        _confidence_interval.SetPoint(_bin_index, x_value, 0)
+        _confidence_interval.SetPointError(_bin_index, 0., 0.)
+
+    # if len(root_numpy.hist2array(_tobject, include_overflow=False, copy=True, return_edges=False)[:-1]) < 3:
+    #     print("WARNING: Skipping histogram due to low statistic! Setting bin to zero!")
+    # else:
+        # _fit = ROOT.TF1('fit_function', "[0]+[1]*x", x_min, x_max)
+        # _fit.SetParameters(0., 0.)
+        # _fit.SetParNames("m", "c")
+        # _tobject.Fit(_fit, '', '', x_min, x_max)
+    skip, _parameter, _parameter_errors = poly1_fit(_tobject, x_min, x_max)
+    if not skip:
+        ROOT.TVirtualFitter.GetFitter().GetConfidenceIntervals(_confidence_interval, 0.683)
+    return asrootpy(_confidence_interval)

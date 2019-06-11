@@ -63,10 +63,20 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
     if testcase:
         _expansions = {
             'zpt': [
-                dict(name="zpt_gt_30", label=dict(zpt=(30, 100000)))
+                # dict(name="zpt_gt_30", label=dict(zpt=(30, 100000))),
+                # dict(name="zpt_30_50", label=dict(zpt=(30, 100000))),
+                # dict(name="zpt_700_1500", label=dict(zpt=(30, 100000))),
+                dict(name=_k, label="zpt_{}_{}".format("{:02d}".format(int(round(10*_v['zpt'][0]))),
+                                                       "{:02d}".format(int(round(10*_v['zpt'][1])))))
+                for _k, _v in SPLITTINGS['zpt_jer'].iteritems()
             ],
             'eta': [
-                dict(name="absEta_all", label=dict(absjet1eta=(0, 5.191)))
+                dict(name="absEta_all", label=dict(absjet1eta=(0, 5.191))),
+                # dict(name="absEta_0000_0522", label=dict(absjet1eta=(0, 5.191))),
+                # dict(name="absEta_1305_1740", label=dict(absjet1eta=(0, 5.191))),
+                # dict(name=_k, label="eta_{}_{}".format("{:02d}".format(int(round(10 * _v['absjet1eta'][0]))),
+                #                                        "{:02d}".format(int(round(10 * _v['absjet1eta'][1])))))
+                # for _k, _v in SPLITTINGS['eta_jer'].iteritems()
             ],
         }
     else:
@@ -74,12 +84,12 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
             'zpt': [
                 dict(name=_k, label="zpt_{}_{}".format("{:02d}".format(int(round(10*_v['zpt'][0]))),
                                                        "{:02d}".format(int(round(10*_v['zpt'][1])))))
-                for _k, _v in SPLITTINGS['zpt'].iteritems()
+                for _k, _v in SPLITTINGS['zpt_jer'].iteritems()
             ],
             'eta': [
                 dict(name=_k, label="eta_{}_{}".format("{:02d}".format(int(round(10*_v['absjet1eta'][0]))),
                                                        "{:02d}".format(int(round(10*_v['absjet1eta'][1])))))
-                for _k, _v in SPLITTINGS['eta_wide'].iteritems()
+                for _k, _v in SPLITTINGS['eta_jer'].iteritems()
             ],
         }
 
@@ -105,7 +115,7 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                     'subplots': [
                         #  Data and MC values
                         dict(
-                            expression='{}'.format(build_expression(_quantity)),
+                            expression='{quantity}'.format(quantity=build_expression(_quantity)),
                             label=r'{}'.format(_quantity), plot_method='errorbar', color=_color, marker="o",
                             marker_style="full", pad=0)
                         for _quantity, _color in zip(quantities, colors)
@@ -116,6 +126,23 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                                 subtrahend=', '.join([build_expression('pli-mc'), build_expression('zres-mc')])),
                              label=r'jer-extracted-mc', plot_method='errorbar', color="red", marker="o",
                              marker_style="full", pad=0)  # , zorder=-99, alpha=0.5)
+                    ] + [
+                        # Fit-results of Data and MC values
+                        dict(
+                            expression='hist_of_poly1_fit({quantity}, 0., 0.3)'.format(quantity=build_expression(_quantity)),
+                            label=None, plot_method='step', show_yerr_as='band', color=_color, pad=0,
+                            zorder=-99)
+                        for _quantity, _color in zip(quantities, colors)
+
+                    ] + [
+                        # Fit-results of JER extracted from MC
+                        dict(
+                            expression="hist_of_poly1_fit(quadratic_subtraction({minuend},[{subtrahend}]), 0., 0.3)".format(
+                                minuend=build_expression('ptbalance-mc'),
+                                subtrahend=', '.join(
+                                    [build_expression('pli-mc'), build_expression('zres-mc')])),
+                            label=None, plot_method='step', show_yerr_as='band', color='red', pad=0,
+                            zorder=-99)
                     # ] + [
                     #     # JER extracted from data
                     #     dict(expression="quadratic_subtraction({minuend},[{subtrahend}])".format(
@@ -176,7 +203,7 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                             'x_range': [alpha_min, alpha_max],
                             # 'x_scale': '{quantity[scale]}',
                             'y_label': 'Resolution',
-                            # 'y_range': (0.05, 0.2),
+                            'y_range': (0.05, 0.20),
                             # 'axvlines': ContextValue('quantity[expected_values]'),
                             'x_ticklabels': [],
                             'y_scale': 'linear',
