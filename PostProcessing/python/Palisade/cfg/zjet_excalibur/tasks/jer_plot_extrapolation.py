@@ -30,18 +30,19 @@ LOOKUP_CHANNEL_LABEL = {
 
 
 def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_level, colors, basename, output_format,
-               testcase, root):
+               test_case, root):
     """
-    :param channel:
-    :param sample_name:
-    :param jec_name:
-    :param run_periods:
-    :param quantities:
-    :param corr_level:
-    :param colors:
-    :param basename:
-    :param output_format:
-    :param testcase:
+    :param channel: Muon or electron channel
+    :param sample_name: Naming convention of input files
+    :param jec_name: JEC version name and number
+    :param run_periods: LHC runs to split up
+    :param quantities: Quantities used for plotting
+    :param corr_level: Choose which JEC levels are applied
+    :param colors: Use specific color scheme
+    :param basename: Naming convention of input files
+    :param output_format: Naming of output files includes format (root, pdf, png, ...)
+    :param test_case: Just use the test expansion
+    :param root: Output files are root-files instead of pictures
     :return:
 
     creates palisade config
@@ -49,7 +50,7 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
 
     # -- construct list of input files and correction level expansion dicts
     _input_files = dict()
-    _input_files['data'] = "{basename}/JER_truncated_RMS_Z{channel}_{sample_name}_{jec_name}_{corr_level}.root".format(
+    _input_files['data'] = "{basename}/{basename}_Z{channel}_{sample_name}_{jec_name}_{corr_level}.root".format(
         channel=channel,
         basename=basename,
         sample_name=sample_name,
@@ -60,20 +61,24 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
     alpha_min, alpha_max = SPLITTINGS['alpha_exclusive']['alpha_all']['alpha']
     alpha_max = 0.3
 
-    if testcase:
+    if test_case:
         _expansions = {
             'zpt': [
-                # dict(name="zpt_gt_30", label=dict(zpt=(30, 100000))),
+                dict(name="zpt_gt_30", label=dict(zpt=(30, 100000))),
                 # dict(name="zpt_30_50", label=dict(zpt=(30, 100000))),
+                # dict(name="zpt_300_400", label=dict(zpt=(300, 400))),
                 # dict(name="zpt_700_1500", label=dict(zpt=(30, 100000))),
-                dict(name=_k, label="zpt_{}_{}".format("{:02d}".format(int(round(10*_v['zpt'][0]))),
-                                                       "{:02d}".format(int(round(10*_v['zpt'][1])))))
-                for _k, _v in SPLITTINGS['zpt_jer'].iteritems()
+                # dict(name="zpt_85_105", label=dict(zpt=(30, 100000))),
+                # dict(name=_k, label="zpt_{}_{}".format("{:02d}".format(int(round(10*_v['zpt'][0]))),
+                #                                        "{:02d}".format(int(round(10*_v['zpt'][1])))))
+                # for _k, _v in SPLITTINGS['zpt_jer'].iteritems()
             ],
             'eta': [
                 dict(name="absEta_all", label=dict(absjet1eta=(0, 5.191))),
                 # dict(name="absEta_0000_0522", label=dict(absjet1eta=(0, 5.191))),
+                # dict(name="absEta_3139_5191", label=dict(absjet1eta=(3.139, 5.191))),
                 # dict(name="absEta_1305_1740", label=dict(absjet1eta=(0, 5.191))),
+                # dict(name="absEta_2964_3139", label=dict(absjet1eta=(0, 5.191))),
                 # dict(name=_k, label="eta_{}_{}".format("{:02d}".format(int(round(10 * _v['absjet1eta'][0]))),
                 #                                        "{:02d}".format(int(round(10 * _v['absjet1eta'][1])))))
                 # for _k, _v in SPLITTINGS['eta_jer'].iteritems()
@@ -93,102 +98,120 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
             ],
         }
 
-    # append '[name]' to format keys that correspond to above expansion keys
-    output_format = output_format.format(
-        channel=channel,
-        sample=sample_name,
-        jec=jec_name,
-        corr_level=corr_level,
-        # for replacing with definitions in _expansions:
-        **{_expansion_key: "{{{0}[name]}}".format(_expansion_key) for _expansion_key in _expansions.keys()}
-    )
+    def _get_file_name(type="gen_reco"):
+        # append '[name]' to format keys that correspond to above expansion keys
+        _return_value = output_format.format(
+            basename=basename,
+            channel=channel,
+            sample=sample_name,
+            jec=jec_name,
+            corr_level=corr_level,
+            extrapolation="alpha_extrapolation_{type}".format(type=type),
+            # for replacing with definitions in _expansions:
+            **{_expansion_key: "{{{0}[name]}}".format(_expansion_key) for _expansion_key in _expansions.keys()}
+        )
+        return _return_value
+
+    def _get_plotting_quantities(type="all"):
+        if type == "data_mc":
+            _quantity_list = ['ptbalance-mc', 'ptbalance-data']
+            _quantity_label_list = [r'jer-extracted-mc', r'jer-extracted-data']
+            _quantity_color_list = ['red', 'black']
+        elif type == "gen_reco":
+            _quantity_list = ['ptbalance-mc']
+            _quantity_label_list = [r'jer-extracted-mc']
+            _quantity_color_list = ['red']
+        elif type == "all_mc":
+            _quantity_list = ['ptbalance-mc', 'pli-mc', 'zres-mc']
+            _quantity_label_list = [r'ptbalance-mc', r'pli-mc', 'zres-mc']
+            _quantity_color_list = ['royalblue', 'springgreen', 'forestgreen']
+        elif type == "all_data":
+            _quantity_list = ['ptbalance-data', 'pli-mc', 'zres-mc']
+            _quantity_label_list = [r'ptbalance-data', r'pli-mc', 'zres-mc']
+            _quantity_color_list = ['grey', 'springgreen', 'forestgreen']
+        else:
+            _quantity_list = ['ptbalance-mc', 'ptbalance-data', 'pli-mc', 'zres-mc']
+            _quantity_label_list = [r'ptbalance-mc', r'ptbalance-data', r'pli-mc', 'zres-mc']
+            _quantity_color_list = ['red', 'black', 'springgreen', 'forestgreen']
+        return zip(_quantity_list, _quantity_label_list, _quantity_color_list)
 
     return_value = {
         'input_files': _input_files,
         'expansions': _expansions
     }
+
     if not root:
         return_value.update({
             'figures': [
                 {
-                    'filename': output_format,
+                    # Gen - Reco Comparison
+                    'filename': _get_file_name(type="gen_reco"),
                     'subplots': [
-                        #  Data and MC values
+                        #  JER generated in MC
                         dict(
-                            expression='{quantity}'.format(quantity=build_expression(_quantity)),
-                            label=r'{}'.format(_quantity), plot_method='errorbar', color=_color, marker="o",
-                            marker_style="full", pad=0)
-                        for _quantity, _color in zip(quantities, colors)
+                            expression='jer_tgrapherrors_from_th1s({quantity}, {alpha})'.format(
+                                quantity=build_expression('jer-gen-mc'),
+                                alpha=build_expression('alpha-mc')),
+                            label=r'{}'.format('jer-generated-mc'), plot_method='errorbar', color='orange', marker="o",
+                            marker_style="full", pad=0, mask_zero_errors=True)
                     ] + [
                         # JER extracted from MC
-                        dict(expression="quadratic_subtraction({minuend},[{subtrahend}])".format(
-                                minuend=build_expression('ptbalance-mc'),
-                                subtrahend=', '.join([build_expression('pli-mc'), build_expression('zres-mc')])),
-                             label=r'jer-extracted-mc', plot_method='errorbar', color="red", marker="o",
-                             marker_style="full", pad=0)  # , zorder=-99, alpha=0.5)
+                        dict(expression="jer_tgrapherrors_from_th1s(jer_th1_from_quadratic_subtraction("
+                                        "{minuend},[{subtrahend}]), {alpha})".format(
+                                minuend=build_expression(_quantity),
+                                subtrahend=', '.join([build_expression('pli-mc'), build_expression('zres-mc')]),
+                                alpha=build_expression('alpha-mc' if '-mc' in _quantity else 'alpha-data')),
+                            label=_quantity_label, plot_method='errorbar', color=_quantity_color, marker="o",
+                            marker_style="full", pad=0, mask_zero_errors=True)
+                        for _quantity, _quantity_label, _quantity_color in _get_plotting_quantities(type="gen_reco")
                     ] + [
-                        # Fit-results of Data and MC values
+                        # Fit-results of JER generated in MC
                         dict(
-                            expression='hist_of_poly1_fit({quantity}, 0., 0.3)'.format(quantity=build_expression(_quantity)),
-                            label=None, plot_method='step', show_yerr_as='band', color=_color, pad=0,
-                            zorder=-99)
-                        for _quantity, _color in zip(quantities, colors)
-
+                            expression='jer_tgrapherror_from_poly1_fit(jer_tgrapherrors_from_th1s('
+                                       '{quantity}, {alpha}), 0., 0.3)'.format(
+                                quantity=build_expression('jer-gen-mc'),
+                                alpha=build_expression('alpha-mc')),
+                            label=None, plot_method='step', show_yerr_as='band', color='orange', pad=0, zorder=-99,
+                            mask_zero_errors=True)
                     ] + [
                         # Fit-results of JER extracted from MC
                         dict(
-                            expression="hist_of_poly1_fit(quadratic_subtraction({minuend},[{subtrahend}]), 0., 0.3)".format(
-                                minuend=build_expression('ptbalance-mc'),
-                                subtrahend=', '.join(
-                                    [build_expression('pli-mc'), build_expression('zres-mc')])),
-                            label=None, plot_method='step', show_yerr_as='band', color='red', pad=0,
-                            zorder=-99)
-                    # ] + [
-                    #     # JER extracted from data
-                    #     dict(expression="quadratic_subtraction({minuend},[{subtrahend}])".format(
-                    #             minuend=build_expression('ptbalance-data'),
-                    #             subtrahend=', '.join([build_expression('pli-mc'), build_expression('zres-mc')])),
-                    #          label=r'jer-extracted-data', plot_method='errorbar', color="black", marker="o",
-                    #          marker_style="full", pad=0)  # , zorder=-99, alpha=0.5)
+                            expression="jer_tgrapherror_from_poly1_fit(jer_tgrapherrors_from_th1s("
+                                       "jer_th1_from_quadratic_subtraction({minuend},[{subtrahend}]), {alpha}), "
+                                       "0., 0.3)".format(
+                                minuend=build_expression(_quantity),
+                                subtrahend=', '.join([build_expression('pli-mc'), build_expression('zres-mc')]),
+                                alpha=build_expression('alpha-mc' if '-mc' in _quantity else 'alpha-data')),
+                            label=None, plot_method='step', show_yerr_as='band', color=_quantity_color, pad=0,
+                            zorder=-99, mask_zero_errors=True)
+                        for _quantity, _quantity_label, _quantity_color in _get_plotting_quantities(type="gen_reco")
                     ] + [
                         # Ratio JER extracted from MC to generated JER from MC
                         dict(
-                            expression="{numerator}/{denominator}".format(
-                                numerator="quadratic_subtraction({minuend},[{subtrahend}])".format(
+                            expression="jer_tgrapherrors_from_th1s(jer_ratio({numerator},{denominator}), "
+                                       "{alpha})".format(
+                                numerator="jer_th1_from_quadratic_subtraction({minuend},[{subtrahend}])".format(
                                     minuend=build_expression('ptbalance-mc'),
                                     subtrahend=', '.join([build_expression('pli-mc'), build_expression('zres-mc')])),
-                                denominator=build_expression('jer-gen-mc')),
-                            label=None, plot_method='errorbar', color='red',
-                            marker='o', marker_style="full", pad=1)
-                    # ] + [
-                    #
-                    #     # Ratio JER extracted from data to generated JER from MC
-                    #     dict(
-                    #         expression="{numerator}/{denominator}".format(
-                    #             numerator="quadratic_subtraction({minuend},[{subtrahend}])".format(
-                    #                 minuend=build_expression('ptbalance-data'),
-                    #                 subtrahend=', '.join([build_expression('pli-mc'), build_expression('zres-mc')])),
-                    #             denominator=build_expression('jer-gen-mc')),
-                    #         label=None, plot_method='errorbar', color='black',
-                    #         marker='o', marker_style="full", pad=1)
-                    # ] + [
-                    #     #  Uncertainty shadow of ratio JER extracted from MC to generated JER from MC
-                    #     dict(
-                    #         expression="{numerator}/{denominator}".format(
-                    #             numerator="quadratic_subtraction({minuend},[{subtrahend}])".format(
-                    #                 minuend=build_expression('ptbalance-mc'),
-                    #                 subtrahend=', '.join([build_expression('pli-mc'), build_expression('zres-mc')])),
-                    #             denominator=build_expression('jer-gen-mc')),
-                    #         label=None, plot_method='step', show_yerr_as='band', color='salmon', pad=1, zorder=-99)
-                    # ] + [
-                    #     #  Uncertainty shadow of ratio JER extracted from data to generated JER from MC
-                    #     dict(
-                    #         expression="{numerator}/{denominator}".format(
-                    #             numerator="quadratic_subtraction({minuend},[{subtrahend}])".format(
-                    #                 minuend=build_expression('ptbalance-data'),
-                    #                 subtrahend=', '.join([build_expression('pli-mc'), build_expression('zres-mc')])),
-                    #             denominator=build_expression('jer-gen-mc')),
-                    #         label=None, plot_method='step', show_yerr_as='band', color='gray', pad=1, zorder=-99)
+                                denominator=build_expression('jer-gen-mc'),
+                                alpha=build_expression('alpha-mc')),
+                            label=None, plot_method='errorbar', color='red', marker='o', marker_style="full", pad=1,
+                            mask_zero_errors=True)
+                    ] + [
+                        # Ratio of fits JER extracted from MC to generated JER from MC
+                        dict(
+                            expression="jer_ratio(jer_tgrapherror_from_poly1_fit("
+                                       "jer_tgrapherrors_from_th1s({numerator}, {alpha}), 0., 0.3), "
+                                       "jer_tgrapherror_from_poly1_fit("
+                                       "jer_tgrapherrors_from_th1s({denominator}, {alpha}), 0., 0.3))".format(
+                                numerator="jer_th1_from_quadratic_subtraction({minuend},[{subtrahend}])".format(
+                                    minuend=build_expression("ptbalance-mc"),
+                                    subtrahend=', '.join([build_expression('pli-mc'), build_expression('zres-mc')])),
+                                denominator=build_expression('jer-gen-mc'),
+                                alpha=build_expression('alpha-mc')),
+                            label=None, plot_method='step', show_yerr_as='band', color='red', pad=1,
+                            zorder=-99,
+                            mask_zero_errors=True)
                     ],
                     'pad_spec': {
                         'right': 0.95,
@@ -203,7 +226,8 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                             'x_range': [alpha_min, alpha_max],
                             # 'x_scale': '{quantity[scale]}',
                             'y_label': 'Resolution',
-                            'y_range': (0.05, 0.20),
+                            # 'y_range': (0.05, 0.20),
+                            'y_range': (0.05, 0.25),
                             # 'axvlines': ContextValue('quantity[expected_values]'),
                             'x_ticklabels': [],
                             'y_scale': 'linear',
@@ -215,7 +239,7 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                             'x_label': 'Second-jet activity',
                             'x_range': [alpha_min, alpha_max],
                             # 'x_scale' : '{quantity[scale]}',
-                            'y_label': 'JER Data/MC',
+                            'y_label': 'Reco/Gen',
                             'y_range': (0.75, 1.25),
                             'axhlines': [dict(values=[1.0])],
                             # 'axvlines': ContextValue('quantity[expected_values]'),
@@ -232,7 +256,237 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                              )),
                     ],
                     'upper_label': jec_name,
-                },
+                }, {
+                    # Data - MC Comparison
+                    'filename': _get_file_name(type="data_mc"),
+                    'subplots': [
+                        # JER extracted from Data and MC
+                        dict(expression="jer_tgrapherrors_from_th1s(jer_th1_from_quadratic_subtraction({minuend},"
+                                        "[{subtrahend}]), {alpha})".format(
+                                minuend=build_expression(_quantity),
+                                subtrahend=', '.join([build_expression('pli-mc'), build_expression('zres-mc')]),
+                                alpha=build_expression('alpha-mc' if '-mc' in _quantity else 'alpha-data')),
+                            label=_quantity_label, plot_method='errorbar', color=_quantity_color, marker="o",
+                            marker_style="full", pad=0, mask_zero_errors=True)
+                        for _quantity, _quantity_label, _quantity_color in _get_plotting_quantities('data_mc')
+                    ] + [
+                        # Fit-results of JER extracted from Data and MC
+                        dict(
+                            expression="jer_tgrapherror_from_poly1_fit(jer_tgrapherrors_from_th1s("
+                                       "jer_th1_from_quadratic_subtraction({minuend}, [{subtrahend}]), {alpha})"
+                                       ", 0., 0.3)".format(
+                                minuend=build_expression(_quantity),
+                                subtrahend=', '.join(
+                                    [build_expression('pli-mc'), build_expression('zres-mc')]),
+                                alpha=build_expression('alpha-mc' if '-mc' in _quantity else 'alpha-data')),
+                            label=None, plot_method='step', show_yerr_as='band', color=_quantity_color, pad=0,
+                            zorder=-99, mask_zero_errors=True)
+                        for _quantity, _quantity_label, _quantity_color in _get_plotting_quantities('data_mc')
+                    ] + [
+                        # Ratio JER extracted from data to JER extracted from MC
+                        dict(
+                            expression="jer_tgrapherrors_from_th1s(jer_ratio({numerator},{denominator}), "
+                                       "{alpha})".format(
+                                numerator="jer_th1_from_quadratic_subtraction({minuend},[{subtrahend}])".format(
+                                    minuend=build_expression('ptbalance-data'),
+                                    subtrahend=', '.join([build_expression('pli-mc'), build_expression('zres-mc')])),
+                                denominator="jer_th1_from_quadratic_subtraction({minuend},[{subtrahend}])".format(
+                                    minuend=build_expression('ptbalance-mc'),
+                                    subtrahend=', '.join([build_expression('pli-mc'), build_expression('zres-mc')])),
+                                alpha=build_expression('alpha-mc')),
+                            label=None, plot_method='errorbar', color='black',
+                            marker='o', marker_style="full", pad=1)
+                    ] + [
+                        # Ratio of fits JER extracted from Data to MC
+                        dict(
+                            expression="jer_ratio(jer_tgrapherror_from_poly1_fit("
+                                       "jer_tgrapherrors_from_th1s({numerator}, {alpha}), 0., 0.3), "
+                                       "jer_tgrapherror_from_poly1_fit("
+                                       "jer_tgrapherrors_from_th1s({denominator}, {alpha}), 0., 0.3))".format(
+                                numerator="jer_th1_from_quadratic_subtraction({minuend},[{subtrahend}])".format(
+                                    minuend=build_expression("ptbalance-data"),
+                                    subtrahend=', '.join(
+                                        [build_expression('pli-mc'), build_expression('zres-mc')])),
+                                denominator="jer_th1_from_quadratic_subtraction({minuend},[{subtrahend}])".format(
+                                    minuend=build_expression("ptbalance-mc"),
+                                    subtrahend=', '.join(
+                                        [build_expression('pli-mc'), build_expression('zres-mc')])),
+                                alpha=build_expression('alpha-mc')),
+                            label=None, plot_method='step', show_yerr_as='band', color='black', pad=1,
+                            zorder=-99,
+                            mask_zero_errors=True)
+                    ],
+                    'pad_spec': {
+                        'right': 0.95,
+                        'bottom': 0.15,
+                        'top': 0.925,
+                        'hspace': 0.075,
+                    },
+                    'pads': [
+                        # top pad
+                        {
+                            'height_share': 3,
+                            'x_range': [alpha_min, alpha_max],
+                            # 'x_scale': '{quantity[scale]}',
+                            'y_label': 'Resolution',
+                            # 'y_range': (0.05, 0.20),
+                            'y_range': (0.05, 0.3),
+                            # 'axvlines': ContextValue('quantity[expected_values]'),
+                            'x_ticklabels': [],
+                            'y_scale': 'linear',
+                            'legend_kwargs': dict(loc='upper left'),
+                        },
+                        # ratio pad
+                        {
+                            'height_share': 1,
+                            'x_label': 'Second-jet activity',
+                            'x_range': [alpha_min, alpha_max],
+                            # 'x_scale' : '{quantity[scale]}',
+                            'y_label': 'Data/MC',
+                            'y_range': (0., 2.),
+                            'axhlines': [dict(values=[1.0])],
+                            # 'axvlines': ContextValue('quantity[expected_values]'),
+                            'y_scale': 'linear',
+                            'legend_kwargs': dict(loc='upper right'),
+                        },
+                    ],
+                    'texts': [
+                        dict(xy=(.04, 1.015), text=LOOKUP_CHANNEL_LABEL.get(channel, channel), transform='axes',
+                             fontproperties=FontProperties(
+                                 weight='bold',
+                                 family='Nimbus Sans',
+                                 size=16,
+                             )),
+                    ],
+                    'upper_label': jec_name,
+                }
+            ] + [
+                {
+                    # All involved components
+                    'filename': _get_file_name(type="all_"+str(_all_type)),
+                    'subplots': [
+                        #  all raw quantities
+                        dict(
+                            expression='jer_tgrapherrors_from_th1s({quantity}, {alpha})'.format(
+                                quantity=build_expression(_quantity),
+                                alpha=build_expression('alpha-mc' if '-mc' in _quantity else 'alpha-data')),
+                            label=_quantity_label, plot_method='errorbar', color=_quantity_color, marker="o",
+                            marker_style="full", pad=0, mask_zero_errors=True)
+                        for _quantity, _quantity_label, _quantity_color in _get_plotting_quantities(
+                            'all_'+str(_all_type))
+                    ] + [
+                        # Fit-results of all raw quantities
+                        dict(
+                            expression='jer_tgrapherror_from_poly1_fit(jer_tgrapherrors_from_th1s('
+                                       '{quantity}, {alpha}), 0., 0.3)'.format(
+                                quantity=build_expression(_quantity),
+                                alpha=build_expression('alpha-mc' if '-mc' in _quantity else 'alpha-data')),
+                            label=None, plot_method='step', show_yerr_as='band', color=_quantity_color, pad=0,
+                            zorder=-99,
+                            mask_zero_errors=True)
+                        for _quantity, _quantity_label, _quantity_color in _get_plotting_quantities(
+                            'all_'+str(_all_type))
+                    ] + [
+                        # JER extracted from Data and MC
+                        dict(expression="jer_tgrapherrors_from_th1s(jer_th1_from_quadratic_subtraction({minuend},"
+                                        "[{subtrahend}]), {alpha})".format(
+                                minuend=build_expression('ptbalance-'+str(_all_type)),
+                                subtrahend=', '.join([build_expression('pli-mc'), build_expression('zres-mc')]),
+                                alpha=build_expression('alpha-mc' if 'mc' in _all_type else 'alpha-data')),
+                            label=_quantity_label, plot_method='errorbar',
+                            color='black' if _all_type=='data' else 'red', marker="o",
+                            marker_style="full", pad=0, mask_zero_errors=True)
+                    ] + [
+                        # Fit-results of JER extracted from Data and MC
+                        dict(
+                            expression="jer_tgrapherror_from_poly1_fit(jer_tgrapherrors_from_th1s("
+                                       "jer_th1_from_quadratic_subtraction({minuend}, [{subtrahend}]), {alpha})"
+                                       ", 0., 0.3)".format(
+                                minuend=build_expression('ptbalance-'+str(_all_type)),
+                                subtrahend=', '.join(
+                                    [build_expression('pli-mc'), build_expression('zres-mc')]),
+                                alpha=build_expression('alpha-mc' if 'mc' in _all_type else 'alpha-data')),
+                            label=None, plot_method='step', show_yerr_as='band',
+                            color='black' if _all_type=='data' else 'red', pad=0,
+                            zorder=-99, mask_zero_errors=True)
+                    # ] + [
+                    #     # Ratio JER extracted from data to JER extracted from MC
+                    #     dict(
+                    #         expression="jer_tgrapherrors_from_th1s(jer_ratio({numerator},{denominator}), "
+                    #                    "{alpha})".format(
+                    #             numerator="jer_th1_from_quadratic_subtraction({minuend},[{subtrahend}])".format(
+                    #                 minuend=build_expression('ptbalance-data'),
+                    #                 subtrahend=', '.join([build_expression('pli-mc'), build_expression('zres-mc')])),
+                    #             denominator="jer_th1_from_quadratic_subtraction({minuend},[{subtrahend}])".format(
+                    #                 minuend=build_expression('ptbalance-mc'),
+                    #                 subtrahend=', '.join([build_expression('pli-mc'), build_expression('zres-mc')])),
+                    #             alpha=build_expression('alpha-mc')),
+                    #         label=None, plot_method='errorbar', color='black',
+                    #         marker='o', marker_style="full", pad=1)
+                    # ] + [
+                    #     # Ratio of fits JER extracted from Data to MC
+                    #     dict(
+                    #         expression="jer_ratio(jer_tgrapherror_from_poly1_fit("
+                    #                    "jer_tgrapherrors_from_th1s({numerator}, {alpha}), 0., 0.3), "
+                    #                    "jer_tgrapherror_from_poly1_fit("
+                    #                    "jer_tgrapherrors_from_th1s({denominator}, {alpha}), 0., 0.3))".format(
+                    #             numerator="jer_th1_from_quadratic_subtraction({minuend},[{subtrahend}])".format(
+                    #                 minuend=build_expression("ptbalance-data"),
+                    #                 subtrahend=', '.join(
+                    #                     [build_expression('pli-mc'), build_expression('zres-mc')])),
+                    #             denominator="jer_th1_from_quadratic_subtraction({minuend},[{subtrahend}])".format(
+                    #                 minuend=build_expression("ptbalance-mc"),
+                    #                 subtrahend=', '.join(
+                    #                     [build_expression('pli-mc'), build_expression('zres-mc')])),
+                    #             alpha=build_expression('alpha-mc')),
+                    #         label=None, plot_method='step', show_yerr_as='band', color='black', pad=1,
+                    #         zorder=-99,
+                    #         mask_zero_errors=True)
+                    ],
+                    'pad_spec': {
+                        'right': 0.95,
+                        'bottom': 0.15,
+                        'top': 0.925,
+                        'hspace': 0.075,
+                    },
+                    'pads': [
+                        # top pad
+                        {
+                            'height_share': 3,
+                            'x_range': [alpha_min, alpha_max],
+                            'x_label': 'Second-jet activity',
+                            # 'x_scale': '{quantity[scale]}',
+                            'y_label': 'Resolution',
+                            'y_range': (0.0, 0.35),
+                            # 'axvlines': ContextValue('quantity[expected_values]'),
+                            # 'x_ticklabels': [],
+                            'y_scale': 'linear',
+                            'legend_kwargs': dict(loc='upper left'),
+                        },
+                        # ratio pad
+                        # {
+                        #     'height_share': 1,
+                        #     'x_label': 'Second-jet activity',
+                        #     'x_range': [alpha_min, alpha_max],
+                        #     # 'x_scale' : '{quantity[scale]}',
+                        #     'y_label': 'Data/MC',
+                        #     'y_range': (0., 2.),
+                        #     'axhlines': [dict(values=[1.0])],
+                        #     # 'axvlines': ContextValue('quantity[expected_values]'),
+                        #     'y_scale': 'linear',
+                        #     'legend_kwargs': dict(loc='upper right'),
+                        # },
+                    ],
+                    'texts': [
+                        dict(xy=(.04, 1.015), text=LOOKUP_CHANNEL_LABEL.get(channel, channel), transform='axes',
+                             fontproperties=FontProperties(
+                                 weight='bold',
+                                 family='Nimbus Sans',
+                                 size=16,
+                             )),
+                    ],
+                    'upper_label': jec_name,
+                } for _all_type in ['data', 'mc']
             ]
         })
     else:
@@ -249,7 +503,7 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                     'subtasks': [
                         # JER extracted from MC
                         {
-                            'expression': "quadratic_subtraction({minuend},[{subtrahend}])".format(
+                            'expression': "jer_th1_from_quadratic_subtraction({minuend},[{subtrahend}])".format(
                                 minuend=build_expression('ptbalance-mc'),
                                 subtrahend=', '.join([build_expression('pli-mc'), build_expression('zres-mc')])
                             ),
@@ -258,7 +512,7 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                     ] + [
                         # JER extracted from Data
                         {
-                            'expression': "quadratic_subtraction({minuend},[{subtrahend}])".format(
+                            'expression': "jer_th1_from_quadratic_subtraction({minuend},[{subtrahend}])".format(
                                 minuend=build_expression('ptbalance-data'),
                                 subtrahend=', '.join([build_expression('pli-mc'), build_expression('zres-mc')])
                             ),
@@ -301,7 +555,8 @@ def cli(argument_parser):
     argument_parser.add_argument('--basename', help="prefix of ROOT files containing histograms", required=True)
     # optional parameters
     argument_parser.add_argument('--output-format', help="format string indicating full path to output plot",
-                                 default='JER_Extrapolations_Z{channel}_{jec}_{sample}_{corr_level}/{zpt}-{eta}.pdf')
+                                 default='{basename}_Z{channel}_{jec}_{sample}_{corr_level}_{extrapolation}/{zpt}-{eta}'
+                                         '.pdf')
     argument_parser.add_argument('--test', help="plot only one plot for testing configuration", dest='test',
                                  action='store_true')
     argument_parser.add_argument('--root', help="Switch output to root files instead of plots ", dest='root',
@@ -334,8 +589,8 @@ def run(args):
             colors=(args.colors if args.colors else ['grey', 'royalblue', 'springgreen', 'forestgreen', 'orange']),
             basename=args.basename,
             output_format=(args.output_format if not args.root else
-                           'JER_Extrapolations_Z{channel}_{jec}_{sample}_{corr_level}.root'),
-            testcase=(args.test if args.test else False),
+                           '{basename}_Z{channel}_{jec}_{sample}_{corr_level}_{extrapolation}.root'),
+            test_case=(args.test if args.test else False),
             root=(args.root if args.root else False)
         )
         if args.root:
