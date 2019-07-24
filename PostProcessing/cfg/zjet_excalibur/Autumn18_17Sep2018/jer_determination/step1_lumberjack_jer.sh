@@ -29,7 +29,7 @@ for _ch in "mm"; do
         lumberjack.py -a zjet_excalibur -i "$INFILE_MC" \
             --tree "basiccuts_${_corr_level}/ntuple" \
             --input-type mc \
-            --selections "alpha" \
+            --selections "alpha_jer" \
             -j10 \
             --log --progress \
             $@ \
@@ -45,7 +45,7 @@ for _ch in "mm"; do
         lumberjack.py -a zjet_excalibur -i "$INFILE_DATA_ABCD" \
             --tree "basiccuts_${_corr_level}/ntuple" \
             --input-type data \
-            --selections "alpha" \
+            --selections "alpha_jer" \
             -j10 \
             --log --progress \
             $@ \
@@ -61,7 +61,7 @@ for _ch in "mm"; do
         lumberjack.py -a zjet_excalibur -i "$INFILE_DATA_ABC" \
             --tree "basiccuts_${_corr_level}/ntuple" \
             --input-type data \
-            --selections "alpha" \
+            --selections "alpha_jer" \
             -j10 \
             --log --progress \
             $@ \
@@ -77,7 +77,7 @@ for _ch in "mm"; do
         lumberjack.py -a zjet_excalibur -i "$INFILE_DATA_D" \
             --tree "basiccuts_${_corr_level}/ntuple" \
             --input-type data \
-            --selections "alpha" \
+            --selections "alpha_jer" \
             -j10 \
             --log --progress \
             $@ \

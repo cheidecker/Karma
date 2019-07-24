@@ -186,9 +186,13 @@ SELECTIONS = {
     'absjet1eta': [
         "absjet1eta<1.3",
     ],
+    'alpha_jer': [
+        "alpha<0.5",
+    ],
 }
 
 _ALPHA_BIN_EDGES = [0.0, 0.1, 0.15, 0.2, 0.3, 0.4]
+_ALPHA_BIN_EDGES_JER = [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5]
 
 _ETA_BIN_EDGES_BARREL = (0, 1.3)
 _ETA_BIN_EDGES_WIDE = [0, 0.783, 1.305, 1.93, 2.5, 2.964, 3.2, 5.191]
@@ -196,7 +200,7 @@ _ETA_BIN_EDGES_JER = [0., 0.522, 0.783, 1.131, 1.305, 1.74, 1.93, 2.043, 2.322, 
 
 _ETA_BIN_EDGES = QUANTITIES['global']['absjet1eta'].binning
 _ZPT_BIN_EDGES = QUANTITIES['global']['zpt'].binning
-_ZPT_BIN_EDGES_JER = [30, 50, 60, 85, 105, 130, 175, 230, 300, 400, 700, 1500]
+_ZPT_BIN_EDGES_JER = [30, 50, 60, 85, 105, 130, 175, 230, 300, 400]
 
 # specification of ways to split sample into sub-samples
 SPLITTINGS = {
@@ -270,6 +274,10 @@ SPLITTINGS['alpha_inclusive'] = dict({
     for _hi in _ALPHA_BIN_EDGES[1:]
 }, **{"alpha_all": dict(alpha=(_ALPHA_BIN_EDGES[0], _ALPHA_BIN_EDGES[-1]))})
 SPLITTINGS['alpha'] = dict(SPLITTINGS['alpha_exclusive'], **SPLITTINGS['alpha_inclusive'])
+SPLITTINGS['alpha_exclusive_jer'] = dict({
+    "alpha_{:04d}_{:04d}".format(int(_lo*1e2), int(_hi*1e2)): dict(alpha=(_lo, _hi))
+    for _lo, _hi in zip(_ALPHA_BIN_EDGES_JER[:-1], _ALPHA_BIN_EDGES_JER[1:])
+}, **{"alpha_all": dict(alpha=(_ALPHA_BIN_EDGES_JER[0], _ALPHA_BIN_EDGES_JER[-1]))})
 
 
 # -- eta binning
