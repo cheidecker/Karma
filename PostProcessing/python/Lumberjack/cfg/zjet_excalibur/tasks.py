@@ -111,7 +111,7 @@ TASKS = {
     },
 
     "JER_Binning_Data": {
-        "splittings": ["zpt_jer", "eta_jer", "alpha_exclusive"],
+        "splittings": ["zpt_jer", "eta_jer", "alpha_exclusive_jer"],
         "histograms": [
             "{}@weight".format(_q) for _q in ("ptbalance", "alpha")  # no weight
         ],
@@ -119,7 +119,7 @@ TASKS = {
     },
 
     "JER_Binning_MC": {
-        "splittings": ["zpt_jer", "eta_jer", "alpha_exclusive"],
+        "splittings": ["zpt_jer", "eta_jer", "alpha_exclusive_jer"],
         "histograms": [
             "{}@weight".format(_q) for _q in ("ptbalance", "pli", "zres", "genjer", "alpha")  # no weight
         ],
