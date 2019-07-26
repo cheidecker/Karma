@@ -47,6 +47,12 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
     creates palisade config
     """
 
+    # Used Eta and pT binning extracted by key defined in SPLITTINGS
+    eta_binning_name = "eta_jer"
+    zpt_binning_name = "zpt_jer"
+    # alpha_binning_name = "alpha_exclusive_jer"
+    alpha_binning_name = "alpha_exclusive"
+
     # -- construct list of input files and correction level expansion dicts
     _input_files = dict()
     _input_files['data'] = "{basename}/{basename}_Z{channel}_{sample_name}_{jec_name}_{corr_level}.root".format(
@@ -57,7 +63,7 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
         corr_level=corr_level
     )
 
-    alpha_min, alpha_max = SPLITTINGS['alpha_exclusive']['alpha_all']['alpha']
+    alpha_min, alpha_max = SPLITTINGS[alpha_binning_name]['alpha_all']['alpha']
     eta_min, eta_max = SPLITTINGS['eta_jer']['absEta_all']['absjet1eta']
     zpt_min = min([_v["zpt"][0] for _k, _v in SPLITTINGS['zpt_jer'].iteritems() if _k is not "zpt_gt_30"])
     zpt_max = max([_v["zpt"][1] for _k, _v in SPLITTINGS['zpt_jer'].iteritems() if _k is not "zpt_gt_30"])
@@ -70,10 +76,6 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
             dict(name="absEta_all")
         ],
     }
-
-    # Used Eta and pT binning extracted by key defined in SPLITTINGS
-    eta_binning_name = "eta_jer"
-    zpt_binning_name = "zpt_jer"
 
     print(SPLITTINGS[eta_binning_name])
     print(SPLITTINGS[zpt_binning_name])
@@ -103,84 +105,28 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
             'input_files': _input_files,
             'figures': [
                 {
-                    # Eta dependency
+                    # Eta dependency for JER extracted from MC and data
                     'filename': output_format.format(dependency='eta_dependency_{}'.format(_zpt_bin)),
                     'subplots': [
                         #  Eta dependency for MC
                         {
-                            'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], "
-                                          "{alpha_min}, {alpha_max})".format(
-                                hist_list=", ".join(["jer_tgrapherrors_from_th1s(jer_th1_from_quadratic_subtraction("
-                                                     "{minuend},[{subtrahend}]), {alpha})".format(
-                                    minuend='"data:{zpt}/{eta}/ptbalance-mc"'.format(zpt=_zpt_bin, eta=_k),
-                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_zpt_bin, eta=_k),
-                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_zpt_bin, eta=_k)
-                                                          ]),
-                                    alpha='"data:{zpt}/{eta}/alpha-mc"'.format(zpt=_zpt_bin, eta=_k))
-                                    for _k in SPLITTINGS[eta_binning_name]
-                                    if _k is not "absEta_all"
-                                    ]),
-                                bins_list=", ".join(["[{}, {}]".format(_v["absjet1eta"][0], _v["absjet1eta"][1])
-                                    for _k, _v in SPLITTINGS[eta_binning_name].iteritems()
-                                    if _k is not "absEta_all"
-                                    ]),
-                                alpha_min="{}".format(alpha_min),
-                                alpha_max="{}".format(alpha_max),
-                            ),
+                            'expression': "jer_th1_from_quadratic_subtraction({minuend},[{subtrahend}])".format(
+                                minuend='"data:{zpt}/ptbalance-{type}"'.format(zpt=_zpt_bin, type=_type),
+                                subtrahend=', '.join(['"data:{zpt}/pli-mc"'.format(zpt=_zpt_bin),
+                                                      '"data:{zpt}/zres-mc"'.format(zpt=_zpt_bin)
+                                                      ])),
                             'label': r'JER extracted from MC',
                             'plot_method': 'errorbar',
-                            'color': 'red',
+                            'color': _color,
                             'marker': "o",
                             'marker_style': "full",
                             'pad': 0
-                        }
-                    ] + [
-                        #  Eta dependency for data
-                        {
-                            'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], "
-                                          "{alpha_min}, {alpha_max})".format(
-                                hist_list=", ".join(["jer_tgrapherrors_from_th1s(jer_th1_from_quadratic_subtraction("
-                                                     "{minuend},[{subtrahend}]), {alpha})".format(
-                                    minuend='"data:{zpt}/{eta}/ptbalance-data"'.format(zpt=_zpt_bin, eta=_k),
-                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_zpt_bin, eta=_k),
-                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_zpt_bin, eta=_k)
-                                                          ]),
-                                    alpha='"data:{zpt}/{eta}/alpha-data"'.format(zpt=_zpt_bin, eta=_k))
-                                    for _k in SPLITTINGS[eta_binning_name]
-                                    if _k is not "absEta_all"
-                                ]),
-                                bins_list=", ".join(["[{}, {}]".format(_v["absjet1eta"][0], _v["absjet1eta"][1])
-                                    for _k, _v in SPLITTINGS[eta_binning_name].iteritems()
-                                    if _k is not "absEta_all"
-                                    ]),
-                                alpha_min="{}".format(alpha_min),
-                                alpha_max="{}".format(alpha_max),
-                            ),
-                            'label': r'JER extracted from data',
-                            'plot_method': 'errorbar',
-                            'color': 'black',
-                            'marker': "o",
-                            'marker_style': "full",
-                            'pad': 0
-                        }
+                        } for _type, _color in zip(["data", "mc"], ["black", "red"])
                     ] + [
                         #  Eta dependency for MC JER generated
                         {
-                            'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], "
-                                          "{alpha_min}, {alpha_max})".format(
-                                hist_list=", ".join(["jer_tgrapherrors_from_th1s({quantity}, {alpha})".format(
-                                    quantity='"data:{zpt}/{eta}/jer-gen-mc"'.format(zpt=_zpt_bin, eta=_k),
-                                    alpha='"data:{zpt}/{eta}/alpha-mc"'.format(zpt=_zpt_bin, eta=_k))
-                                    for _k in SPLITTINGS[eta_binning_name]
-                                    if _k is not "absEta_all"
-                                ]),
-                                bins_list=", ".join(["[{}, {}]".format(_v["absjet1eta"][0], _v["absjet1eta"][1])
-                                    for _k, _v in SPLITTINGS[eta_binning_name].iteritems()
-                                    if _k is not "absEta_all"
-                                    ]),
-                                alpha_min="{}".format(alpha_min),
-                                alpha_max="{}".format(alpha_max),
-                            ),
+                            'expression': "{quantity}".format(
+                                    quantity='"data:{zpt}/genjer-mc"'.format(zpt=_zpt_bin)),
                             'label': r'generated JER from MC',
                             'plot_method': 'errorbar',
                             'color': 'orange',
@@ -191,36 +137,16 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                     ] + [
                         #  Eta dependency ratio plot Data/MC
                         {
-                            'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], "
-                                          "{alpha_min}, {alpha_max})/histogram_from_linear_extrapolation("
-                                          "[{hist_list2}], [{bins_list}], {alpha_min}, {alpha_max})".format(
-                                hist_list=", ".join(["jer_tgrapherrors_from_th1s(jer_th1_from_quadratic_subtraction("
-                                                     "{minuend},[{subtrahend}]), {alpha})".format(
-                                    minuend='"data:{zpt}/{eta}/ptbalance-data"'.format(zpt=_zpt_bin, eta=_k),
-                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_zpt_bin, eta=_k),
-                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_zpt_bin, eta=_k)
-                                                          ]),
-                                    alpha='"data:{zpt}/{eta}/alpha-data"'.format(zpt=_zpt_bin, eta=_k))
-                                        for _k in SPLITTINGS[eta_binning_name]
-                                        if _k is not "absEta_all"
-                                    ]),
-                                hist_list2=", ".join(["jer_tgrapherrors_from_th1s(jer_th1_from_quadratic_subtraction("
-                                                      "{minuend},[{subtrahend}]), {alpha})".format(
-                                    minuend='"data:{zpt}/{eta}/ptbalance-mc"'.format(zpt=_zpt_bin, eta=_k),
-                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_zpt_bin, eta=_k),
-                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_zpt_bin, eta=_k)
-                                                          ]),
-                                    alpha='"data:{zpt}/{eta}/alpha-mc"'.format(zpt=_zpt_bin, eta=_k))
-                                    for _k in SPLITTINGS[eta_binning_name]
-                                    if _k is not "absEta_all"
-                                    ]),
-                                bins_list=", ".join(["[{}, {}]".format(_v["absjet1eta"][0], _v["absjet1eta"][1])
-                                    for _k, _v in SPLITTINGS[eta_binning_name].iteritems()
-                                    if _k is not "absEta_all"
-                                    ]),
-                                alpha_min="{}".format(alpha_min),
-                                alpha_max="{}".format(alpha_max),
-                            ),
+                            'expression': "jer_th1_from_quadratic_subtraction({minuend_data},[{subtrahend_data}])/"
+                                          "jer_th1_from_quadratic_subtraction({minuend_mc},[{subtrahend_mc}])".format(
+                                minuend_data='"data:{zpt}/ptbalance-data"'.format(zpt=_zpt_bin),
+                                subtrahend_data=', '.join(['"data:{zpt}/pli-mc"'.format(zpt=_zpt_bin),
+                                                           '"data:{zpt}/zres-mc"'.format(zpt=_zpt_bin)
+                                                           ]),
+                                minuend_mc='"data:{zpt}/ptbalance-mc"'.format(zpt=_zpt_bin),
+                                subtrahend_mc=', '.join(['"data:{zpt}/pli-mc"'.format(zpt=_zpt_bin),
+                                                         '"data:{zpt}/zres-mc"'.format(zpt=_zpt_bin)
+                                                         ])),
                             'label': r'JER extracted data/MC',
                             'plot_method': 'errorbar',
                             'color': 'black',
@@ -231,32 +157,13 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                     ] + [
                         #  Eta dependency ratio plot gen/reco
                         {
-                            'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], "
-                                          "{alpha_min}, {alpha_max})/histogram_from_linear_extrapolation("
-                                          "[{hist_list2}], [{bins_list}], {alpha_min}, {alpha_max})".format(
-                                hist_list=", ".join(["jer_tgrapherrors_from_th1s({minuend}, {alpha})".format(
-                                    minuend='"data:{zpt}/{eta}/jer-gen-mc"'.format(zpt=_zpt_bin, eta=_k),
-                                    alpha='"data:{zpt}/{eta}/alpha-mc"'.format(zpt=_zpt_bin, eta=_k))
-                                        for _k in SPLITTINGS[eta_binning_name]
-                                        if _k is not "absEta_all"
-                                    ]),
-                                hist_list2=", ".join(["jer_tgrapherrors_from_th1s(jer_th1_from_quadratic_subtraction("
-                                                      "{minuend},[{subtrahend}]), {alpha})".format(
-                                    minuend='"data:{zpt}/{eta}/ptbalance-mc"'.format(zpt=_zpt_bin, eta=_k),
-                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_zpt_bin, eta=_k),
-                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_zpt_bin, eta=_k)
-                                                          ]),
-                                    alpha='"data:{zpt}/{eta}/alpha-mc"'.format(zpt=_zpt_bin, eta=_k))
-                                    for _k in SPLITTINGS[eta_binning_name]
-                                    if _k is not "absEta_all"
-                                    ]),
-                                bins_list=", ".join(["[{}, {}]".format(_v["absjet1eta"][0], _v["absjet1eta"][1])
-                                    for _k, _v in SPLITTINGS[eta_binning_name].iteritems()
-                                    if _k is not "absEta_all"
-                                    ]),
-                                alpha_min="{}".format(alpha_min),
-                                alpha_max="{}".format(alpha_max),
-                            ),
+                            'expression': "{quantity}/"
+                                          "jer_th1_from_quadratic_subtraction({minuend_mc},[{subtrahend_mc}])".format(
+                                quantity='"data:{zpt}/genjer-mc"'.format(zpt=_zpt_bin),
+                                minuend_mc='"data:{zpt}/ptbalance-mc"'.format(zpt=_zpt_bin),
+                                subtrahend_mc=', '.join(['"data:{zpt}/pli-mc"'.format(zpt=_zpt_bin),
+                                                         '"data:{zpt}/zres-mc"'.format(zpt=_zpt_bin)
+                                                         ])),
                             'label': r'JER generated/extracted',
                             'plot_method': 'errorbar',
                             'color': 'orange',
@@ -314,81 +221,25 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                     # Zpt dependency
                     'filename': output_format.format(dependency='zpt_dependency_{}'.format(_eta_bin)),
                     'subplots': [
-                        #  Zpt dependency for MC
+                        #  Zpt dependency for MC and data
                         {
-                            'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], "
-                                          "{alpha_min}, {alpha_max})".format(
-                                hist_list=", ".join(["jer_tgrapherrors_from_th1s(jer_th1_from_quadratic_subtraction("
-                                                     "{minuend},[{subtrahend}]), {alpha})".format(
-                                    minuend='"data:{zpt}/{eta}/ptbalance-mc"'.format(zpt=_k, eta=_eta_bin),
-                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_k, eta=_eta_bin),
-                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_k, eta=_eta_bin)
-                                                          ]),
-                                    alpha='"data:{zpt}/{eta}/alpha-mc"'.format(zpt=_k, eta=_eta_bin))
-                                    for _k in SPLITTINGS[zpt_binning_name]
-                                    if _k is not "zpt_gt_30"
-                                    ]),
-                                bins_list=", ".join(["[{}, {}]".format(_v["zpt"][0], _v["zpt"][1])
-                                     for _k, _v in SPLITTINGS[zpt_binning_name].iteritems()
-                                     if _k is not "zpt_gt_30"
-                                     ]),
-                                alpha_min="{}".format(alpha_min),
-                                alpha_max="{}".format(alpha_max),
-                            ),
+                            'expression': "jer_th1_from_quadratic_subtraction({minuend},[{subtrahend}])".format(
+                                minuend='"data:{eta}/ptbalance-{type}"'.format(eta=_eta_bin, type=_type),
+                                subtrahend=', '.join(['"data:{eta}/pli-mc"'.format(eta=_eta_bin),
+                                                      '"data:{eta}/zres-mc"'.format(eta=_eta_bin)
+                                                      ])),
                             'label': r'JER extracted from MC',
                             'plot_method': 'errorbar',
-                            'color': 'red',
+                            'color': _color,
                             'marker': "o",
                             'marker_style': "full",
                             'pad': 0
-                        }
-                    ] + [
-                        #  Zpt dependency for data
-                        {
-                            'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], "
-                                          "{alpha_min}, {alpha_max})".format(
-                                hist_list=", ".join(["jer_tgrapherrors_from_th1s(jer_th1_from_quadratic_subtraction("
-                                                     "{minuend},[{subtrahend}]), {alpha})".format(
-                                    minuend='"data:{zpt}/{eta}/ptbalance-data"'.format(zpt=_k, eta=_eta_bin),
-                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_k, eta=_eta_bin),
-                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_k, eta=_eta_bin)
-                                                          ]),
-                                    alpha='"data:{zpt}/{eta}/alpha-data"'.format(zpt=_k, eta=_eta_bin))
-                                    for _k in SPLITTINGS[zpt_binning_name]
-                                    if _k is not "zpt_gt_30"
-                                    ]),
-                                bins_list=", ".join(["[{}, {}]".format(_v["zpt"][0], _v["zpt"][1])
-                                     for _k, _v in SPLITTINGS[zpt_binning_name].iteritems()
-                                     if _k is not "zpt_gt_30"
-                                     ]),
-                                alpha_min="{}".format(alpha_min),
-                                alpha_max="{}".format(alpha_max),
-                            ),
-                            'label': r'JER extracted from data',
-                            'plot_method': 'errorbar',
-                            'color': 'black',
-                            'marker': "o",
-                            'marker_style': "full",
-                            'pad': 0
-                        }
+                        } for _type, _color in zip(["data", "mc"], ["black", "red"])
                     ] + [
                         #  Zpt dependency for MC JER generated
                         {
-                            'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], "
-                                          "{alpha_min}, {alpha_max})".format(
-                                hist_list=", ".join(["jer_tgrapherrors_from_th1s({minuend}, {alpha})".format(
-                                    minuend='"data:{zpt}/{eta}/jer-gen-mc"'.format(zpt=_k, eta=_eta_bin),
-                                    alpha='"data:{zpt}/{eta}/alpha-mc"'.format(zpt=_k, eta=_eta_bin))
-                                    for _k in SPLITTINGS[zpt_binning_name]
-                                    if _k is not "zpt_gt_30"
-                                    ]),
-                                bins_list=", ".join(["[{}, {}]".format(_v["zpt"][0], _v["zpt"][1])
-                                     for _k, _v in SPLITTINGS[zpt_binning_name].iteritems()
-                                     if _k is not "zpt_gt_30"
-                                     ]),
-                                alpha_min="{}".format(alpha_min),
-                                alpha_max="{}".format(alpha_max),
-                            ),
+                            'expression': "{quantity}".format(
+                                    quantity='"data:{eta}/genjer-mc"'.format(eta=_eta_bin)),
                             'label': r'generated JER from MC',
                             'plot_method': 'errorbar',
                             'color': 'orange',
@@ -399,36 +250,16 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                     ] + [
                         #  Zpt dependency ratio plot Data/MC
                         {
-                            'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], "
-                                          "{alpha_min}, {alpha_max})/histogram_from_linear_extrapolation("
-                                          "[{hist_list2}], [{bins_list}], {alpha_min}, {alpha_max})".format(
-                                hist_list=", ".join(["jer_tgrapherrors_from_th1s(jer_th1_from_quadratic_subtraction("
-                                                     "{minuend},[{subtrahend}]), {alpha})".format(
-                                    minuend='"data:{zpt}/{eta}/ptbalance-data"'.format(zpt=_k, eta=_eta_bin),
-                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_k, eta=_eta_bin),
-                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_k, eta=_eta_bin)
-                                                          ]),
-                                    alpha='"data:{zpt}/{eta}/alpha-data"'.format(zpt=_k, eta=_eta_bin))
-                                    for _k in SPLITTINGS[zpt_binning_name]
-                                    if _k is not "zpt_gt_30"
-                                    ]),
-                                hist_list2=", ".join(["jer_tgrapherrors_from_th1s(jer_th1_from_quadratic_subtraction("
-                                                      "{minuend},[{subtrahend}]), {alpha})".format(
-                                    minuend='"data:{zpt}/{eta}/ptbalance-mc"'.format(zpt=_k,eta=_eta_bin),
-                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_k, eta=_eta_bin),
-                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_k, eta=_eta_bin)
-                                                          ]),
-                                    alpha='"data:{zpt}/{eta}/alpha-mc"'.format(zpt=_k, eta=_eta_bin))
-                                    for _k in SPLITTINGS[zpt_binning_name]
-                                    if _k is not "zpt_gt_30"
-                                    ]),
-                                bins_list=", ".join(["[{}, {}]".format(_v["zpt"][0], _v["zpt"][1])
-                                     for _k, _v in SPLITTINGS[zpt_binning_name].iteritems()
-                                     if _k is not "zpt_gt_30"
-                                     ]),
-                                alpha_min="{}".format(alpha_min),
-                                alpha_max="{}".format(alpha_max),
-                            ),
+                            'expression': "jer_th1_from_quadratic_subtraction({minuend_data},[{subtrahend_data}])/"
+                                          "jer_th1_from_quadratic_subtraction({minuend_mc},[{subtrahend_mc}])".format(
+                                minuend_data='"data:{eta}/ptbalance-data"'.format(eta=_eta_bin),
+                                subtrahend_data=', '.join(['"data:{eta}/pli-mc"'.format(eta=_eta_bin),
+                                                      '"data:{eta}/zres-mc"'.format(eta=_eta_bin)
+                                                      ]),
+                                minuend_mc='"data:{eta}/ptbalance-mc"'.format(eta=_eta_bin),
+                                subtrahend_mc=', '.join(['"data:{eta}/pli-mc"'.format(eta=_eta_bin),
+                                                      '"data:{eta}/zres-mc"'.format(eta=_eta_bin)
+                                                      ])),
                             'label': r'JER extracted data/MC',
                             'plot_method': 'errorbar',
                             'color': 'black',
@@ -439,32 +270,13 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                     ] + [
                         #  Zpt dependency ratio plot gen/reco
                         {
-                            'expression': "histogram_from_linear_extrapolation([{hist_list}], [{bins_list}], "
-                                          "{alpha_min}, {alpha_max})/histogram_from_linear_extrapolation("
-                                          "[{hist_list2}], [{bins_list}], {alpha_min}, {alpha_max})".format(
-                                hist_list=", ".join(["jer_tgrapherrors_from_th1s({minuend}, {alpha})".format(
-                                    minuend='"data:{zpt}/{eta}/jer-gen-mc"'.format(zpt=_k, eta=_eta_bin),
-                                    alpha='"data:{zpt}/{eta}/alpha-mc"'.format(zpt=_k, eta=_eta_bin))
-                                    for _k in SPLITTINGS[zpt_binning_name]
-                                    if _k is not "zpt_gt_30"
-                                    ]),
-                                hist_list2=", ".join(["jer_tgrapherrors_from_th1s(jer_th1_from_quadratic_subtraction("
-                                                      "{minuend},[{subtrahend}]), {alpha})".format(
-                                    minuend='"data:{zpt}/{eta}/ptbalance-mc"'.format(zpt=_k, eta=_eta_bin),
-                                    subtrahend=', '.join(['"data:{zpt}/{eta}/pli-mc"'.format(zpt=_k, eta=_eta_bin),
-                                                          '"data:{zpt}/{eta}/zres-mc"'.format(zpt=_k, eta=_eta_bin)
-                                                          ]),
-                                    alpha='"data:{zpt}/{eta}/alpha-mc"'.format(zpt=_k, eta=_eta_bin))
-                                    for _k in SPLITTINGS[zpt_binning_name]
-                                    if _k is not "zpt_gt_30"
-                                    ]),
-                                bins_list=", ".join(["[{}, {}]".format(_v["zpt"][0], _v["zpt"][1])
-                                     for _k, _v in SPLITTINGS[zpt_binning_name].iteritems()
-                                     if _k is not "zpt_gt_30"
-                                     ]),
-                                alpha_min="{}".format(alpha_min),
-                                alpha_max="{}".format(alpha_max),
-                            ),
+                            'expression': "{quantity}/"
+                                          "jer_th1_from_quadratic_subtraction({minuend_mc},[{subtrahend_mc}])".format(
+                                quantity='"data:{eta}/genjer-mc"'.format(zpt=_k, eta=_eta_bin),
+                                minuend_mc='"data:{eta}/ptbalance-mc"'.format(zpt=_k, eta=_eta_bin),
+                                subtrahend_mc=', '.join(['"data:{eta}/pli-mc"'.format(zpt=_k, eta=_eta_bin),
+                                                      '"data:{eta}/zres-mc"'.format(zpt=_k, eta=_eta_bin)
+                                                      ])),
                             'label': r'JER generated/extracted',
                             'plot_method': 'errorbar',
                             'color': 'orange',
@@ -601,7 +413,7 @@ def cli(argument_parser):
     argument_parser.add_argument('-l', '--corr-level', help="name of JEC correction level to include, e.g. 'L1L2L3'",
                                  choices=['L1', 'L1L2L3', 'L1L2L3Res', 'L1L2Res'], metavar="CORR_LEVEL")
     argument_parser.add_argument('-q', '--quantities', help="quantities to plot", nargs='+',
-                                 choices=['ptbalance-data', 'ptbalance-mc', 'pli-mc', 'zres-mc', 'jer-gen-mc'],
+                                 choices=['ptbalance-data', 'ptbalance-mc', 'pli-mc', 'zres-mc', 'genjer-mc'],
                                  metavar="QUANTITY")
     argument_parser.add_argument('-f', '--colors', help="colors of quantities to plot", nargs='+', metavar="COLOR")
     argument_parser.add_argument('--basename', help="prefix of ROOT files containing histograms", required=True)
@@ -634,7 +446,7 @@ def run(args):
             corr_level=args.corr_level,
             run_periods=args.run_periods,
             quantities=(args.quantities if args.quantities else ['ptbalance-data', 'ptbalance-mc', 'pli-mc', 'zres-mc',
-                                                                 'jer-gen-mc']),
+                                                                 'genjer-mc']),
             colors=(args.colors if args.colors else ['grey', 'royalblue', 'springgreen', 'forestgreen', 'orange']),
             basename=args.basename,
             output_format=(args.output_format if not args.root else

@@ -10,13 +10,11 @@ from Karma.PostProcessing.Palisade import ContextValue, LiteralString, PlotProce
 from Karma.PostProcessing.Lumberjack.cfg.zjet_excalibur import SPLITTINGS, QUANTITIES
 
 
-def build_expression(quantity_path, source_type, alpha_folder, eta_folder="{eta[name]}", pt_folder="{zpt[name]}"):
+def build_expression(source_type, alpha_folder, quantity_path):
     """
-    :param quantity_path:
     :param source_type:
     :param alpha_folder:
-    :param eta_folder:
-    :param pt_folder:
+    :param quantity_path:
     :return:
 
     convenience function for putting together paths in input ROOT file
@@ -24,17 +22,11 @@ def build_expression(quantity_path, source_type, alpha_folder, eta_folder="{eta[
     source_type = source_type.strip().lower()
     assert source_type in ('data', 'mc')
     if source_type == 'data':
-        return '"{type}_{{corr_level[{type}]}}:{zpt}/{eta}/{alpha}/{quantity}"'.format(type=source_type,
-                                                                                       zpt=pt_folder,
-                                                                                       eta=eta_folder,
-                                                                                       alpha=alpha_folder,
-                                                                                       quantity=quantity_path)
+        return '"{0}_{{corr_level[{0}]}}:{{zpt[name]}}/{{eta[name]}}/{1}/{2}"'.format(source_type, alpha_folder,
+                                                                                      quantity_path)
     elif source_type == 'mc':
-        return '"{type}_{{corr_level[{type}]}}:{zpt}/{eta}/{alpha}/{quantity}"'.format(type=source_type,
-                                                                                         zpt=pt_folder,
-                                                                                         eta=eta_folder,
-                                                                                         alpha=alpha_folder,
-                                                                                         quantity=quantity_path)
+        return '"{0}_{{corr_level[{0}]}}:{{zpt[name]}}/{{eta[name]}}/{1}/{2}"'.format(source_type, alpha_folder,
+                                                                                      quantity_path)
 
 
 LOOKUP_MC_CORR_LEVEL = {
@@ -84,34 +76,19 @@ def get_config(channel, sample_name, jec_name, run_periods, corr_levels, basenam
             dict(name=_cl, data=_cl, mc=_cl_for_mc)
         )
 
-    if root:
-        _expansions = {
-            'corr_level': _corr_level_dicts,
-            # 'zpt': [
-            #     dict(name=_k, label="zpt_{}_{}".format("{:04d}".format(int(round(_v['zpt'][0]))),
-            #                                            "{:04d}".format(int(round(_v['zpt'][1])))))
-            #     for _k, _v in SPLITTINGS['zpt_jer'].iteritems()
-            # ],
-            # 'eta': [
-            #     dict(name=_k, label="eta_{}_{}".format("{:04d}".format(int(round(10 * _v['absjet1eta'][0]))),
-            #                                            "{:04d}".format(int(round(10 * _v['absjet1eta'][1])))))
-            #     for _k, _v in SPLITTINGS['eta_jer'].iteritems()
-            # ],
-        }
-    else:
-        _expansions = {
-            'corr_level': _corr_level_dicts,
-            'zpt': [
-                dict(name=_k, label="zpt_{}_{}".format("{:04d}".format(int(round(_v['zpt'][0]))),
-                                                       "{:04d}".format(int(round(_v['zpt'][1])))))
-                for _k, _v in SPLITTINGS['zpt_jer'].iteritems()
-            ],
-            'eta': [
-                dict(name=_k, label="eta_{}_{}".format("{:04d}".format(int(round(10 * _v['absjet1eta'][0]))),
-                                                       "{:04d}".format(int(round(10 * _v['absjet1eta'][1])))))
-                for _k, _v in SPLITTINGS['eta_jer'].iteritems()
-            ],
-        }
+    _expansions = {
+        'corr_level': _corr_level_dicts,
+        'zpt': [
+            dict(name=_k, label="zpt_{}_{}".format("{:04d}".format(int(round(_v['zpt'][0]))),
+                                                   "{:04d}".format(int(round(_v['zpt'][1])))))
+            for _k, _v in SPLITTINGS['zpt_jer'].iteritems()
+        ],
+        'eta': [
+            dict(name=_k, label="eta_{}_{}".format("{:04d}".format(int(round(10 * _v['absjet1eta'][0]))),
+                                                   "{:04d}".format(int(round(10 * _v['absjet1eta'][1])))))
+            for _k, _v in SPLITTINGS['eta_jer'].iteritems()
+        ],
+    }
 
     if extraction_method == 'R':
         _extraction_function = 'jer_th1_from_truncated_rms'
@@ -129,11 +106,7 @@ def get_config(channel, sample_name, jec_name, run_periods, corr_levels, basenam
     if run_periods is None:
         pass
 
-    _quantity_list = ['ptbalance', 'ptbalance', 'zres', 'pli', 'genjer']
-    _quantity_color_list = ['black', 'blue', 'forestgreen', 'springgreen', 'orange']
-    _quantity_type_list = ['data', 'mc', 'mc', 'mc', 'mc']
-    _quantity_label_list = ['p$_\mathrm{{T}}$-balance', 'p$_\mathrm{{T}}$-balance', 'Z boson momentum resolution',
-                            'Particle level imbalance (PLI)', 'generated jet momentum resolution']
+    _alpha_binning = "alpha_exclusive_jer"
 
     # define truncation values for different channels
     # _truncation = 98.5 if channel == 'mm' else 90.
@@ -172,8 +145,8 @@ def get_config(channel, sample_name, jec_name, run_periods, corr_levels, basenam
                     'subplots': [
                         #
                         dict(
-                            expression='{}'.format(build_expression(quantity_path='h_{}_weight'.format(_quantity),
-                                                                    source_type=_type, alpha_folder='alpha_all')),
+                            expression='{}'.format(build_expression(_type, alpha_folder='alpha_all',
+                                                                    quantity_path='h_{}_weight'.format(_quantity))),
                             label=r''.format(_quantity),
                             plot_method='errorbar',
                             color=_color,
@@ -211,8 +184,13 @@ def get_config(channel, sample_name, jec_name, run_periods, corr_levels, basenam
                              )),
                     ],
                     'upper_label': jec_name,
-                } for _quantity, _color, _type, _label in zip(_quantity_list, _quantity_color_list,
-                                                              _quantity_type_list, _quantity_label_list)
+                } for _quantity, _color, _type, _label in zip(['ptbalance', 'ptbalance', 'zres', 'pli', 'genjer'],
+                                                              ['black', 'blue', 'forestgreen', 'springgreen', 'orange'],
+                                                              ['data', 'mc', 'mc', 'mc', 'mc'],
+                                                              ['p$_\mathrm{{T}}$-balance', 'p$_\mathrm{{T}}$-balance',
+                                                               'Z boson momentum resolution',
+                                                               'Particle level imbalance (PLI)',
+                                                               'generated jet momentum resolution'])
             ]
         })
     else:
@@ -221,96 +199,112 @@ def get_config(channel, sample_name, jec_name, run_periods, corr_levels, basenam
                 {
                     "filename": output_format,
                     'subtasks': [
-                        # -> pT-dependency in all eta-bins for all quantities in list
+                        # pT-balance from Data
                         {
                             'expression': '{extraction_function}([{file_list}], [{x_bins}], {truncation})'.format(
                                 extraction_function=_extraction_function,
                                 file_list=", ".join([
-                                    build_expression(quantity_path='h_{quantity}_weight'.format(quantity=_quantity),
-                                                     source_type=_type,
-                                                     alpha_folder="alpha_all",
-                                                     eta_folder="{}".format(_k_eta),
-                                                     pt_folder="{}".format(_k_pt))
-                                    for _k_pt in SPLITTINGS['zpt_jer'] if _k_pt is not "zpt_gt_30"
+                                    build_expression(source_type='data', alpha_folder=_k,
+                                                     quantity_path='h_ptbalance_weight')
+                                    for _k in SPLITTINGS[_alpha_binning] if _k is not "alpha_all"
                                 ]),
-                                x_bins=", ".join(["[{}, {}]".format(_v_pt["zpt"][0], _v_pt["zpt"][1])
-                                                  for _k_pt, _v_pt in SPLITTINGS['zpt_jer'].iteritems()
-                                                  if _k_pt is not "zpt_gt_30"
+                                x_bins=", ".join(["[{}, {}]".format(_v["alpha"][0], _v["alpha"][1])
+                                                  for _k, _v in SPLITTINGS[_alpha_binning].iteritems()
+                                                  if _k is not "alpha_all"
                                                   ]),
                                 truncation=_truncation
                             ),
-                            'output_path': '{path}/{quantity}-{type}'.format(path=_k_eta, quantity=_quantity,
-                                                                             type=_type)
-                        } for _k_eta in SPLITTINGS['eta_jer'] for _quantity, _type in zip(_quantity_list,
-                                                                                          _quantity_type_list)
+                            'output_path': '{zpt[name]}/{eta[name]}/ptbalance-data'
+                        }
                     ] + [
-                        # -> eta-dependency in all pT-bins for all quantities in list
+                        # pT-balance from MC
                         {
                             'expression': '{extraction_function}([{file_list}], [{x_bins}], {truncation})'.format(
                                 extraction_function=_extraction_function,
                                 file_list=", ".join([
-                                    build_expression(quantity_path='h_{quantity}_weight'.format(quantity=_quantity),
-                                                     source_type=_type,
-                                                     alpha_folder="alpha_all",
-                                                     eta_folder="{}".format(_k_eta),
-                                                     pt_folder="{}".format(_k_pt))
-                                    for _k_eta in SPLITTINGS['eta_jer'] if _k_eta is not "absEta_all"
+                                    build_expression(source_type='mc', alpha_folder=_k,
+                                                     quantity_path='h_ptbalance_weight')
+                                    for _k in SPLITTINGS[_alpha_binning] if _k is not "alpha_all"
                                 ]),
-                                x_bins=", ".join(["[{}, {}]".format(_v_eta["absjet1eta"][0], _v_eta["absjet1eta"][1])
-                                                  for _k_eta, _v_eta in SPLITTINGS['eta_jer'].iteritems()
-                                                  if _k_eta is not "absEta_all"
+                                x_bins=", ".join(["[{}, {}]".format(_v["alpha"][0], _v["alpha"][1])
+                                                  for _k, _v in SPLITTINGS[_alpha_binning].iteritems() if
+                                                  _k is not "alpha_all"
                                                   ]),
                                 truncation=_truncation
                             ),
-                            'output_path': '{path}/{quantity}-{type}'.format(path=_k_pt, quantity=_quantity, type=_type)
-                        } for _k_pt in SPLITTINGS['zpt_jer'] for _quantity, _type in zip(_quantity_list,
-                                                                                         _quantity_type_list)
-                    # ] + [
-                    #     # -> pT-dependency in all eta-bins for alpha
-                    #     {
-                    #         'expression': '{extraction_function}([{file_list}], [{x_bins}])'.format(
-                    #             extraction_function="jer_th1_from_mean",
-                    #             file_list=", ".join([
-                    #                 build_expression(quantity_path='h_{quantity}_weight'.format(quantity=_quantity),
-                    #                                  source_type=_type,
-                    #                                  alpha_folder="alpha_all",
-                    #                                  eta_folder="{}".format(_k_eta),
-                    #                                  pt_folder="{}".format(_k_pt))
-                    #                 for _k_pt in SPLITTINGS['zpt_jer'] if _k_pt is not "zpt_gt_30"
-                    #             ]),
-                    #             x_bins=", ".join(["[{}, {}]".format(_v_pt["zpt"][0], _v_pt["zpt"][1])
-                    #                               for _k_pt, _v_pt in SPLITTINGS['zpt_jer'].iteritems()
-                    #                               if _k_pt is not "zpt_gt_30"
-                    #                               ])
-                    #         ),
-                    #         'output_path': '{path}/{quantity}-{type}'.format(path=_k_eta, quantity=_quantity,
-                    #                                                          type=_type)
-                    #     } for _k_eta in SPLITTINGS['eta_jer'] for _quantity, _type in zip(["alpha", "alpha"],
-                    #                                                                       ["data", "mc"])
-                    # ] + [
-                    #     # -> eta-dependency in all pT-bins for alpha
-                    #     {
-                    #         'expression': '{extraction_function}([{file_list}], [{x_bins}])'.format(
-                    #             extraction_function="jer_th1_from_mean",
-                    #             file_list=", ".join([
-                    #                 build_expression(
-                    #                     quantity_path='h_{quantity}_weight'.format(quantity=_quantity),
-                    #                     source_type=_type,
-                    #                     alpha_folder="alpha_all",
-                    #                     eta_folder="{}".format(_k_eta),
-                    #                     pt_folder="{}".format(_k_pt))
-                    #                 for _k_eta in SPLITTINGS['eta_jer'] if _k_eta is not "absEta_all"
-                    #             ]),
-                    #             x_bins=", ".join(
-                    #                 ["[{}, {}]".format(_v_eta["absjet1eta"][0], _v_eta["absjet1eta"][1])
-                    #                  for _k_eta, _v_eta in SPLITTINGS['eta_jer'].iteritems()
-                    #                  if _k_eta is not "absEta_all"
-                    #                  ])
-                    #         ),
-                    #         'output_path': '{path}/{quantity}-{type}'.format(path=_k_pt, quantity=_quantity,
-                    #                                                          type=_type)
-                    #     } for _k_pt in SPLITTINGS['zpt_jer'] for _quantity, _type in zip(["alpha", "alpha"],
-                    #                                                                      ["data", "mc"])
+                            'output_path': '{zpt[name]}/{eta[name]}/ptbalance-mc'
+                        }
+                    ] + [
+                        # PLI from MC
+                        {
+                            'expression': '{extraction_function}([{file_list}], [{x_bins}], {truncation})'.format(
+                                extraction_function=_extraction_function,
+                                file_list=", ".join([
+                                    build_expression(source_type='mc', alpha_folder=_k,
+                                                     quantity_path='h_pli_weight')
+                                    for _k in SPLITTINGS[_alpha_binning] if _k is not "alpha_all"
+                                ]),
+                                x_bins=", ".join(["[{}, {}]".format(_v["alpha"][0], _v["alpha"][1])
+                                                  for _k, _v in SPLITTINGS[_alpha_binning].iteritems() if
+                                                  _k is not "alpha_all"
+                                                  ]),
+                                truncation=_truncation
+                            ),
+                            'output_path': '{zpt[name]}/{eta[name]}/pli-mc'
+                        }
+                    ] + [
+                        # Z-Res from MC
+                        {
+                            'expression': '{extraction_function}([{file_list}], [{x_bins}], {truncation})'.format(
+                                extraction_function=_extraction_function,
+                                file_list=", ".join([
+                                    build_expression(source_type='mc', alpha_folder=_k,
+                                                     quantity_path='h_zres_weight')
+                                    for _k in SPLITTINGS[_alpha_binning] if _k is not "alpha_all"
+                                ]),
+                                x_bins=", ".join(["[{}, {}]".format(_v["alpha"][0], _v["alpha"][1])
+                                                  for _k, _v in SPLITTINGS[_alpha_binning].iteritems() if
+                                                  _k is not "alpha_all"
+                                                  ]),
+                                truncation=_truncation
+                            ),
+                            'output_path': '{zpt[name]}/{eta[name]}/zres-mc'
+                        }
+                    ] + [
+                        # generated JER from MC
+                        {
+                            'expression': '{extraction_function}([{file_list}], [{x_bins}], {truncation})'.format(
+                                extraction_function=_extraction_function,
+                                file_list=", ".join([
+                                    build_expression(source_type='mc', alpha_folder=_k,
+                                                     quantity_path='h_genjer_weight')
+                                    for _k in SPLITTINGS[_alpha_binning] if _k is not "alpha_all"
+                                ]),
+                                x_bins=", ".join(["[{}, {}]".format(_v["alpha"][0], _v["alpha"][1])
+                                                  for _k, _v in SPLITTINGS[_alpha_binning].iteritems() if
+                                                  _k is not "alpha_all"
+                                                  ]),
+                                truncation=_truncation
+                            ),
+                            'output_path': '{zpt[name]}/{eta[name]}/genjer-mc'
+                        }
+                    ] + [
+                        # alpha histograms for correct binning in alpha extrapolation
+                        {
+                            'expression': 'jer_th1_from_mean([{file_list}], [{x_bins}])'.format(
+                                extraction_function=_extraction_function,
+                                file_list=", ".join([
+                                    build_expression(source_type=_type, alpha_folder=_k,
+                                                     quantity_path='h_alpha_weight')
+                                    for _k in SPLITTINGS[_alpha_binning] if _k is not "alpha_all"
+                                ]),
+                                x_bins=", ".join(["[{}, {}]".format(_v["alpha"][0], _v["alpha"][1])
+                                                  for _k, _v in SPLITTINGS[_alpha_binning].iteritems() if
+                                                  _k is not "alpha_all"
+                                                  ]),
+                            ),
+                            'output_path': '{zpt[name]}/{eta[name]}/alpha-'+_type
+                        } for _type in ["data", "mc"]
                     ],
                 }
             ],
@@ -375,7 +369,7 @@ def run(args):
             basename_data=args.basename_data,
             basename_mc=args.basename_mc,
             output_format=(args.output_format if not args.root else
-                           'JER_truncated_{extraction_method}_Z{channel}_{sample}_{jec}_{corr_level}.root'),
+                           'JER_truncated_{extraction_method}_alpha_Z{channel}_{sample}_{jec}_{corr_level}.root'),
             root=args.root,
             extraction_method=args.extraction_method,
         )

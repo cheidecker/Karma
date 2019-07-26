@@ -48,9 +48,15 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
     creates palisade config
     """
 
+    # Used Eta and pT binning extracted by key defined in SPLITTINGS
+    # eta_binning_name = "eta_jer"
+    # zpt_binning_name = "zpt_jer"
+    alpha_binning_name = "alpha_exclusive_jer"
+    # alpha_binning_name = "alpha_exclusive"
+
     # -- construct list of input files and correction level expansion dicts
     _input_files = dict()
-    _input_files['data'] = "{basename}/{basename}_Z{channel}_{sample_name}_{jec_name}_{corr_level}.root".format(
+    _input_files['data'] = "{basename}/{basename}_alpha_Z{channel}_{sample_name}_{jec_name}_{corr_level}.root".format(
         channel=channel,
         basename=basename,
         sample_name=sample_name,
@@ -58,8 +64,8 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
         corr_level=corr_level
     )
 
-    alpha_min, alpha_max = SPLITTINGS['alpha_exclusive']['alpha_all']['alpha']
-    alpha_max = 0.3
+    alpha_min, alpha_max = SPLITTINGS[alpha_binning_name]['alpha_all']['alpha']
+    # alpha_max = 0.3
 
     if test_case:
         _expansions = {
@@ -150,7 +156,7 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                         #  JER generated in MC
                         dict(
                             expression='jer_tgrapherrors_from_th1s({quantity}, {alpha})'.format(
-                                quantity=build_expression('jer-gen-mc'),
+                                quantity=build_expression('genjer-mc'),
                                 alpha=build_expression('alpha-mc')),
                             label=r'{}'.format('jer-generated-mc'), plot_method='errorbar', color='orange', marker="o",
                             marker_style="full", pad=0, mask_zero_errors=True)
@@ -169,7 +175,7 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                         dict(
                             expression='jer_tgrapherror_from_poly1_fit(jer_tgrapherrors_from_th1s('
                                        '{quantity}, {alpha}), 0., 0.3)'.format(
-                                quantity=build_expression('jer-gen-mc'),
+                                quantity=build_expression('genjer-mc'),
                                 alpha=build_expression('alpha-mc')),
                             label=None, plot_method='step', show_yerr_as='band', color='orange', pad=0, zorder=-99,
                             mask_zero_errors=True)
@@ -193,7 +199,7 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                                 numerator="jer_th1_from_quadratic_subtraction({minuend},[{subtrahend}])".format(
                                     minuend=build_expression('ptbalance-mc'),
                                     subtrahend=', '.join([build_expression('pli-mc'), build_expression('zres-mc')])),
-                                denominator=build_expression('jer-gen-mc'),
+                                denominator=build_expression('genjer-mc'),
                                 alpha=build_expression('alpha-mc')),
                             label=None, plot_method='errorbar', color='red', marker='o', marker_style="full", pad=1,
                             mask_zero_errors=True)
@@ -207,7 +213,7 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                                 numerator="jer_th1_from_quadratic_subtraction({minuend},[{subtrahend}])".format(
                                     minuend=build_expression("ptbalance-mc"),
                                     subtrahend=', '.join([build_expression('pli-mc'), build_expression('zres-mc')])),
-                                denominator=build_expression('jer-gen-mc'),
+                                denominator=build_expression('genjer-mc'),
                                 alpha=build_expression('alpha-mc')),
                             label=None, plot_method='step', show_yerr_as='band', color='red', pad=1,
                             zorder=-99,
@@ -343,7 +349,7 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                             'x_range': [alpha_min, alpha_max],
                             # 'x_scale' : '{quantity[scale]}',
                             'y_label': 'Data/MC',
-                            'y_range': (0., 2.),
+                            'y_range': (0.5, 1.5),
                             'axhlines': [dict(values=[1.0])],
                             # 'axvlines': ContextValue('quantity[expected_values]'),
                             'y_scale': 'linear',
@@ -393,8 +399,8 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                                 minuend=build_expression('ptbalance-'+str(_all_type)),
                                 subtrahend=', '.join([build_expression('pli-mc'), build_expression('zres-mc')]),
                                 alpha=build_expression('alpha-mc' if 'mc' in _all_type else 'alpha-data')),
-                            label=_quantity_label, plot_method='errorbar',
-                            color='black' if _all_type=='data' else 'red', marker="o",
+                            label='jer-extracted-'+str(_all_type), plot_method='errorbar',
+                            color='black' if _all_type == 'data' else 'red', marker="o",
                             marker_style="full", pad=0, mask_zero_errors=True)
                     ] + [
                         # Fit-results of JER extracted from Data and MC
@@ -407,7 +413,7 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                                     [build_expression('pli-mc'), build_expression('zres-mc')]),
                                 alpha=build_expression('alpha-mc' if 'mc' in _all_type else 'alpha-data')),
                             label=None, plot_method='step', show_yerr_as='band',
-                            color='black' if _all_type=='data' else 'red', pad=0,
+                            color='black' if _all_type == 'data' else 'red', pad=0,
                             zorder=-99, mask_zero_errors=True)
                     # ] + [
                     #     # Ratio JER extracted from data to JER extracted from MC
@@ -521,7 +527,7 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                     ] + [
                         # generated JER from MC
                         {
-                            'expression': build_expression("jer-gen-mc"),
+                            'expression': build_expression("genjer-mc"),
                             'output_path': '{zpt[name]}_{eta[name]}/jer_gen_mc'
                         }
                     ],
@@ -549,7 +555,7 @@ def cli(argument_parser):
     argument_parser.add_argument('-l', '--corr-level', help="name of JEC correction level to include, e.g. 'L1L2L3'",
                                  choices=['L1', 'L1L2L3', 'L1L2L3Res', 'L1L2Res'], metavar="CORR_LEVEL")
     argument_parser.add_argument('-q', '--quantities', help="quantities to plot", nargs='+',
-                                 choices=['ptbalance-data', 'ptbalance-mc', 'pli-mc', 'zres-mc', 'jer-gen-mc'],
+                                 choices=['ptbalance-data', 'ptbalance-mc', 'pli-mc', 'zres-mc', 'genjer-mc'],
                                  metavar="QUANTITY")
     argument_parser.add_argument('-f', '--colors', help="colors of quantities to plot", nargs='+', metavar="COLOR")
     argument_parser.add_argument('--basename', help="prefix of ROOT files containing histograms", required=True)
@@ -585,7 +591,7 @@ def run(args):
             corr_level=args.corr_level,
             run_periods=args.run_periods,
             quantities=(args.quantities if args.quantities else
-                        ['ptbalance-data', 'ptbalance-mc', 'pli-mc', 'zres-mc', 'jer-gen-mc']),
+                        ['ptbalance-data', 'ptbalance-mc', 'pli-mc', 'zres-mc', 'genjer-mc']),
             colors=(args.colors if args.colors else ['grey', 'royalblue', 'springgreen', 'forestgreen', 'orange']),
             basename=args.basename,
             output_format=(args.output_format if not args.root else

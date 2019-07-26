@@ -6,41 +6,66 @@
 #channels="mm ee"
 channels="mm"
 
+########################################################################################################################
+# without alpha extrapolation
+########################################################################################################################
+
+# create basic root-files
 rootfiles_truncated_rms=false
 rootfiles_truncated_Gaussian=false
 rootfiles_truncated_LogNormal=false
 
+# Plotting different result types
 plotting_truncated_rms=false
 plotting_truncated_Gaussian=false
 plotting_truncated_LogNormal=false
 
 plotting_truncation_scan=false
 
+plotting_dependency_RMS=true
+plotting_dependency_Gaussian=false
+plotting_dependency_LogNormal=false
+
+#rootfiles_dependency=false
+
+plotting_2d_dependency_RMS=false
+plotting_2d_dependency_Gaussian=false
+plotting_2d_dependency_LogNormal=false
+
+########################################################################################################################
+# with alpha extrapolation
+########################################################################################################################
+
+# create basic root-files
+rootfiles_truncated_rms_alpha=false
+rootfiles_truncated_Gaussian_alpha=false
+rootfiles_truncated_LogNormal_alpha=false
+
+# Plotting different result types
 plotting_extrapolation_RMS=false
 plotting_extrapolation_Gaussian=false
 plotting_extrapolation_LogNormal=false
 
-rootfiles_extrapolation_RMS=false
-rootfiles_extrapolation_Gaussian=false
-rootfiles_extrapolation_LogNormal=false
+#rootfiles_extrapolation_RMS=false
+#rootfiles_extrapolation_Gaussian=false
+#rootfiles_extrapolation_LogNormal=false
 
-plotting_dependency_RMS=false
-plotting_dependency_Gaussian=false
-plotting_dependency_LogNormal=false
+plotting_dependency_RMS_extrapolated=false
+plotting_dependency_Gaussian_extrapolated=false
+plotting_dependency_LogNormal_extrapolated=false
 
-rootfiles_dependency=false
-
-plotting_2d_dependency_RMS=true
-plotting_2d_dependency_Gaussian=false
-plotting_2d_dependency_LogNormal=false
+plotting_2d_dependency_RMS_extrapolated=false
+plotting_2d_dependency_Gaussian_extrapolated=false
+plotting_2d_dependency_LogNormal_extrapolated=false
 
 # settings:
-DATA_VERSION='ABCD'
+RUN_VERSION='ABCD'
+DATA_VERSION='17Sep2018'
 JEC_VERSION='Autumn18_JECV8'
+RUN_PERIODS=Run2018{ABCD}
 
 # for debugging use command:
 # python -m cProfile -s tottime -o debug.prof /home/christoph/.local/bin/palisade.py ...
-
 if ${rootfiles_truncated_rms}; then
     echo "Saving truncated RMS results"
     echo "==================================="
@@ -49,12 +74,12 @@ if ${rootfiles_truncated_rms}; then
         echo "Processing channel: ${channel}"
 
         palisade.py task zjet_excalibur jer_rootfiles \
-            --basename-data "JER_Binning_Data_${DATA_VERSION}" \
+            --basename-data "JER_Binning_Data_${RUN_VERSION}" \
             --basename-mc 'JER_Binning_MC' \
             --jec ${JEC_VERSION} \
-            --sample 17Sep2018 \
+            --sample ${DATA_VERSION} \
             --corr-levels "L1L2Res" \
-            --run-periods Run2018{ABCD} \
+            --run-periods ${RUN_PERIODS} \
             --channel "${channel}"\
             --output-dir JER_truncated_RMS \
             --root \
@@ -70,12 +95,12 @@ if ${rootfiles_truncated_Gaussian}; then
         echo "Processing channel: ${channel}"
 
         palisade.py task zjet_excalibur jer_rootfiles \
-            --basename-data "JER_Binning_Data_${DATA_VERSION}" \
+            --basename-data "JER_Binning_Data_${RUN_VERSION}" \
             --basename-mc 'JER_Binning_MC' \
             --jec ${JEC_VERSION} \
-            --sample 17Sep2018 \
+            --sample ${DATA_VERSION} \
             --corr-levels "L1L2Res" \
-            --run-periods Run2018{ABCD} \
+            --run-periods ${RUN_PERIODS} \
             --channel "${channel}"\
             --output-dir JER_truncated_Gaussian_fit \
             --root \
@@ -91,12 +116,75 @@ if ${rootfiles_truncated_LogNormal}; then
         echo "Processing channel: ${channel}"
 
         palisade.py task zjet_excalibur jer_rootfiles \
-            --basename-data "JER_Binning_Data_${DATA_VERSION}" \
+            --basename-data "JER_Binning_Data_${RUN_VERSION}" \
             --basename-mc 'JER_Binning_MC' \
             --jec ${JEC_VERSION} \
-            --sample 17Sep2018 \
+            --sample ${DATA_VERSION} \
             --corr-levels "L1L2Res" \
-            --run-periods Run2018{ABCD} \
+            --run-periods ${RUN_PERIODS} \
+            --channel "${channel}"\
+            --output-dir JER_truncated_LogNormal_fit \
+            --root \
+            --extraction-method "L"
+    done
+fi
+
+if ${rootfiles_truncated_rms_alpha}; then
+    echo "Saving truncated RMS results"
+    echo "==================================="
+
+    for channel in ${channels}; do
+        echo "Processing channel: ${channel}"
+
+        palisade.py task zjet_excalibur jer_rootfiles_alpha \
+            --basename-data "JER_Binning_Data_${RUN_VERSION}" \
+            --basename-mc 'JER_Binning_MC' \
+            --jec ${JEC_VERSION} \
+            --sample ${DATA_VERSION} \
+            --corr-levels "L1L2Res" \
+            --run-periods ${RUN_PERIODS} \
+            --channel "${channel}"\
+            --output-dir JER_truncated_RMS \
+            --root \
+            --extraction-method "R"
+    done
+fi
+
+if ${rootfiles_truncated_Gaussian_alpha}; then
+    echo "Saving truncated Gaussian results"
+    echo "==================================="
+
+    for channel in ${channels}; do
+        echo "Processing channel: ${channel}"
+
+        palisade.py task zjet_excalibur jer_rootfiles_alpha \
+            --basename-data "JER_Binning_Data_${RUN_VERSION}" \
+            --basename-mc 'JER_Binning_MC' \
+            --jec ${JEC_VERSION} \
+            --sample ${DATA_VERSION} \
+            --corr-levels "L1L2Res" \
+            --run-periods ${RUN_PERIODS} \
+            --channel "${channel}"\
+            --output-dir JER_truncated_Gaussian_fit \
+            --root \
+            --extraction-method "G"
+    done
+fi
+
+if ${rootfiles_truncated_LogNormal_alpha}; then
+    echo "Saving truncated logNormal results"
+    echo "==================================="
+
+    for channel in ${channels}; do
+        echo "Processing channel: ${channel}"
+
+        palisade.py task zjet_excalibur jer_rootfiles_alpha \
+            --basename-data "JER_Binning_Data_${RUN_VERSION}" \
+            --basename-mc 'JER_Binning_MC' \
+            --jec ${JEC_VERSION} \
+            --sample ${DATA_VERSION} \
+            --corr-levels "L1L2Res" \
+            --run-periods ${RUN_PERIODS} \
             --channel "${channel}"\
             --output-dir JER_truncated_LogNormal_fit \
             --root \
@@ -112,12 +200,12 @@ if ${plotting_truncated_rms}; then
         echo "Processing channel: ${channel}"
 
         palisade.py task zjet_excalibur jer_rootfiles \
-            --basename-data "JER_Binning_Data_${DATA_VERSION}" \
+            --basename-data "JER_Binning_Data_${RUN_VERSION}" \
             --basename-mc 'JER_Binning_MC' \
             --jec ${JEC_VERSION} \
-            --sample 17Sep2018 \
+            --sample ${DATA_VERSION} \
             --corr-levels "L1L2Res" \
-            --run-periods Run2018{ABCD} \
+            --run-periods ${RUN_PERIODS} \
             --channel "${channel}"\
             --output-dir JER_truncated_RMS
     done
@@ -131,12 +219,12 @@ if ${plotting_truncation_scan}; then
         echo "Processing channel: ${channel}"
 
         palisade.py task zjet_excalibur jer_truncationscan \
-            --basename-data "JER_Binning_Data_${DATA_VERSION}" \
+            --basename-data "JER_Binning_Data_${RUN_VERSION}" \
             --basename-mc 'JER_Binning_MC' \
             --jec ${JEC_VERSION} \
-            --sample 17Sep2018 \
+            --sample ${DATA_VERSION} \
             --corr-levels "L1L2Res" \
-            --run-periods Run2018{ABCD} \
+            --run-periods ${RUN_PERIODS} \
             --channel "${channel}"\
             --output-dir JER_Truncation_Scan
     done
@@ -152,7 +240,7 @@ if ${plotting_extrapolation_RMS}; then
         palisade.py task zjet_excalibur jer_plot_extrapolation \
             --basename JER_truncated_RMS \
             --jec ${JEC_VERSION} \
-            --sample 17Sep2018 \
+            --sample ${DATA_VERSION} \
             --corr-level "L1L2Res" \
             --run-periods Run2018ABCD \
             --channel "${channel}" \
@@ -171,7 +259,7 @@ if ${plotting_extrapolation_Gaussian}; then
         palisade.py task zjet_excalibur jer_plot_extrapolation \
             --basename JER_truncated_Gaussian_fit \
             --jec ${JEC_VERSION} \
-            --sample 17Sep2018 \
+            --sample ${DATA_VERSION} \
             --corr-level "L1L2Res" \
             --run-periods Run2018ABCD \
             --channel "${channel}" \
@@ -190,7 +278,7 @@ if ${plotting_extrapolation_LogNormal}; then
         palisade.py task zjet_excalibur jer_plot_extrapolation \
             --basename JER_truncated_LogNormal_fit \
             --jec ${JEC_VERSION} \
-            --sample 17Sep2018 \
+            --sample ${DATA_VERSION} \
             --corr-level "L1L2Res" \
             --run-periods Run2018ABCD \
             --channel "${channel}" \
@@ -199,68 +287,68 @@ if ${plotting_extrapolation_LogNormal}; then
     done
 fi
 
-if ${rootfiles_extrapolation_RMS}; then
-    echo "Saving extrapolation results:"
-    echo "============================="
+#if ${rootfiles_extrapolation_RMS}; then
+#    echo "Saving extrapolation results:"
+#    echo "============================="
+#
+#    for channel in ${channels}; do
+#        echo "Processing channel: ${channel}"
+#
+#        palisade.py task zjet_excalibur jer_plot_extrapolation \
+#            --basename JER_truncated_RMS \
+#            --jec ${JEC_VERSION} \
+#            --sample ${DATA_VERSION} \
+#            --corr-level "L1L2Res" \
+#            --run-periods Run2018ABCD \
+#            --channel "${channel}" \
+#            --output-dir JER_Extrapolation\
+#            --root
+#    #         \
+#    #        --test
+#    done
+#fi
 
-    for channel in ${channels}; do
-        echo "Processing channel: ${channel}"
+#if ${rootfiles_extrapolation_Gaussian}; then
+#    echo "Saving extrapolation results:"
+#    echo "============================="
+#
+#    for channel in ${channels}; do
+#        echo "Processing channel: ${channel}"
+#
+#        palisade.py task zjet_excalibur jer_plot_extrapolation \
+#            --basename JER_truncated_Gaussian_fit \
+#            --jec ${JEC_VERSION} \
+#            --sample ${DATA_VERSION} \
+#            --corr-level "L1L2Res" \
+#            --run-periods Run2018ABCD \
+#            --channel "${channel}" \
+#            --output-dir JER_Extrapolation\
+#            --root
+#    #         \
+#    #        --test
+#    done
+#fi
 
-        palisade.py task zjet_excalibur jer_plot_extrapolation \
-            --basename JER_truncated_RMS \
-            --jec ${JEC_VERSION} \
-            --sample 17Sep2018 \
-            --corr-level "L1L2Res" \
-            --run-periods Run2018ABCD \
-            --channel "${channel}" \
-            --output-dir JER_Extrapolation\
-            --root
-    #         \
-    #        --test
-    done
-fi
-
-if ${rootfiles_extrapolation_Gaussian}; then
-    echo "Saving extrapolation results:"
-    echo "============================="
-
-    for channel in ${channels}; do
-        echo "Processing channel: ${channel}"
-
-        palisade.py task zjet_excalibur jer_plot_extrapolation \
-            --basename JER_truncated_Gaussian_fit \
-            --jec ${JEC_VERSION} \
-            --sample 17Sep2018 \
-            --corr-level "L1L2Res" \
-            --run-periods Run2018ABCD \
-            --channel "${channel}" \
-            --output-dir JER_Extrapolation\
-            --root
-    #         \
-    #        --test
-    done
-fi
-
-if ${rootfiles_extrapolation_LogNormal}; then
-    echo "Saving extrapolation results:"
-    echo "============================="
-
-    for channel in ${channels}; do
-        echo "Processing channel: ${channel}"
-
-        palisade.py task zjet_excalibur jer_plot_extrapolation \
-            --basename JER_truncated_LogNormal_fit \
-            --jec ${JEC_VERSION} \
-            --sample 17Sep2018 \
-            --corr-level "L1L2Res" \
-            --run-periods Run2018ABCD \
-            --channel "${channel}" \
-            --output-dir JER_Extrapolation\
-            --root
-    #         \
-    #        --test
-    done
-fi
+#if ${rootfiles_extrapolation_LogNormal}; then
+#    echo "Saving extrapolation results:"
+#    echo "============================="
+#
+#    for channel in ${channels}; do
+#        echo "Processing channel: ${channel}"
+#
+#        palisade.py task zjet_excalibur jer_plot_extrapolation \
+#            --basename JER_truncated_LogNormal_fit \
+#            --jec ${JEC_VERSION} \
+#            --sample ${DATA_VERSION} \
+#            --corr-level "L1L2Res" \
+#            --run-periods Run2018ABCD \
+#            --channel "${channel}" \
+#            --output-dir JER_Extrapolation\
+#            --root
+#    #         \
+#    #        --test
+#    done
+#fi
 
 if ${plotting_dependency_RMS}; then
     echo "Plotting RMS dependency results:"
@@ -272,12 +360,12 @@ if ${plotting_dependency_RMS}; then
         palisade.py task zjet_excalibur jer_plot_dependency \
             --basename JER_truncated_RMS \
             --jec ${JEC_VERSION} \
-            --sample 17Sep2018 \
+            --sample ${DATA_VERSION} \
             --corr-level "L1L2Res" \
             --run-periods Run2018ABCD \
             --channel "${channel}" \
             --output-dir JER_truncated_RMS_Dependency\
-            --quantities "jer-gen-mc" \
+            --quantities "genjer-mc" \
             --colors "orange"
     done
 fi
@@ -292,12 +380,12 @@ if ${plotting_dependency_Gaussian}; then
         palisade.py task zjet_excalibur jer_plot_dependency \
             --basename JER_truncated_Gaussian_fit \
             --jec ${JEC_VERSION} \
-            --sample 17Sep2018 \
+            --sample ${DATA_VERSION} \
             --corr-level "L1L2Res" \
             --run-periods Run2018ABCD \
             --channel "${channel}" \
             --output-dir JER_truncated_Gaussian_Dependency\
-            --quantities "jer-gen-mc" \
+            --quantities "genjer-mc" \
             --colors "orange"
     done
 fi
@@ -312,34 +400,94 @@ if ${plotting_dependency_LogNormal}; then
         palisade.py task zjet_excalibur jer_plot_dependency \
             --basename JER_truncated_LogNormal_fit \
             --jec ${JEC_VERSION} \
-            --sample 17Sep2018 \
+            --sample ${DATA_VERSION} \
             --corr-level "L1L2Res" \
             --run-periods Run2018ABCD \
             --channel "${channel}" \
             --output-dir JER_truncated_LogNormal_Dependency\
-            --quantities "jer-gen-mc" \
+            --quantities "genjer-mc" \
             --colors "orange"
     done
 fi
 
-if ${rootfiles_dependency}; then
-    echo "Saving RMS dependency results:"
+#if ${rootfiles_dependency}; then
+#    echo "Saving RMS dependency results:"
+#    echo "============================="
+#
+#    for channel in ${channels}; do
+#        echo "Processing channel: ${channel}"
+#
+#        palisade.py task zjet_excalibur jer_plot_dependency \
+#            --basename JER_truncated_RMS \
+#            --jec ${JEC_VERSION} \
+#            --sample ${DATA_VERSION} \
+#            --corr-level "L1L2Res" \
+#            --run-periods Run2018ABCD \
+#            --channel "${channel}" \
+#            --output-dir JER_truncated_RMS_Dependency\
+#            --root
+#    #         \
+#    #        --test
+#    done
+#fi
+
+if ${plotting_dependency_RMS_extrapolated}; then
+    echo "Plotting RMS dependency results:"
     echo "============================="
 
     for channel in ${channels}; do
         echo "Processing channel: ${channel}"
 
-        palisade.py task zjet_excalibur jer_plot_dependency \
+        palisade.py task zjet_excalibur jer_plot_dependency_extrapolated \
             --basename JER_truncated_RMS \
             --jec ${JEC_VERSION} \
-            --sample 17Sep2018 \
+            --sample ${DATA_VERSION} \
             --corr-level "L1L2Res" \
             --run-periods Run2018ABCD \
             --channel "${channel}" \
-            --output-dir JER_truncated_RMS_Dependency\
-            --root
-    #         \
-    #        --test
+            --output-dir JER_truncated_RMS_Dependency_extrapolated\
+            --quantities "genjer-mc" \
+            --colors "orange"
+    done
+fi
+
+if ${plotting_dependency_Gaussian_extrapolated}; then
+    echo "Plotting Gaussian dependency results:"
+    echo "============================="
+
+    for channel in ${channels}; do
+        echo "Processing channel: ${channel}"
+
+        palisade.py task zjet_excalibur jer_plot_dependency_extrapolated \
+            --basename JER_truncated_Gaussian_fit \
+            --jec ${JEC_VERSION} \
+            --sample ${DATA_VERSION} \
+            --corr-level "L1L2Res" \
+            --run-periods Run2018ABCD \
+            --channel "${channel}" \
+            --output-dir JER_truncated_Gaussian_Dependency_extrapolated\
+            --quantities "genjer-mc" \
+            --colors "orange"
+    done
+fi
+
+if ${plotting_dependency_LogNormal_extrapolated}; then
+    echo "Plotting logNormal dependency results:"
+    echo "============================="
+
+    for channel in ${channels}; do
+        echo "Processing channel: ${channel}"
+
+        palisade.py task zjet_excalibur jer_plot_dependency_extrapolated \
+            --basename JER_truncated_LogNormal_fit \
+            --jec ${JEC_VERSION} \
+            --sample ${DATA_VERSION} \
+            --corr-level "L1L2Res" \
+            --run-periods Run2018ABCD \
+            --channel "${channel}" \
+            --output-dir JER_truncated_LogNormal_Dependency_extrapolated\
+            --quantities "genjer-mc" \
+            --colors "orange"
     done
 fi
 
@@ -353,7 +501,7 @@ if ${plotting_2d_dependency_RMS}; then
         palisade.py task zjet_excalibur jer_plot_2d_dependency \
             --basename JER_truncated_RMS \
             --jec ${JEC_VERSION} \
-            --sample 17Sep2018 \
+            --sample ${DATA_VERSION} \
             --corr-level "L1L2Res" \
             --run-periods Run2018ABCD \
             --channel "${channel}" \
@@ -373,7 +521,7 @@ if ${plotting_2d_dependency_Gaussian}; then
         palisade.py task zjet_excalibur jer_plot_2d_dependency \
             --basename JER_truncated_Gaussian_fit \
             --jec ${JEC_VERSION} \
-            --sample 17Sep2018 \
+            --sample ${DATA_VERSION} \
             --corr-level "L1L2Res" \
             --run-periods Run2018ABCD \
             --channel "${channel}" \
@@ -393,12 +541,72 @@ if ${plotting_2d_dependency_LogNormal}; then
         palisade.py task zjet_excalibur jer_plot_2d_dependency \
             --basename JER_truncated_LogNormal_fit \
             --jec ${JEC_VERSION} \
-            --sample 17Sep2018 \
+            --sample ${DATA_VERSION} \
             --corr-level "L1L2Res" \
             --run-periods Run2018ABCD \
             --channel "${channel}" \
             --output-dir JER_truncated_LogNormal_Dependency\
             --quantities "jer-gen-mc" \
+            --colors "orange"
+    done
+fi
+
+if ${plotting_2d_dependency_RMS_extrapolated}; then
+    echo "Plotting extrapolated RMS 2D dependency results:"
+    echo "============================="
+
+    for channel in ${channels}; do
+        echo "Processing channel: ${channel}"
+
+        palisade.py task zjet_excalibur jer_plot_2d_dependency_extrapolated \
+            --basename JER_truncated_RMS \
+            --jec ${JEC_VERSION} \
+            --sample ${DATA_VERSION} \
+            --corr-level "L1L2Res" \
+            --run-periods Run2018ABCD \
+            --channel "${channel}" \
+            --output-dir JER_truncated_RMS_Dependency_extrapolated\
+            --quantities "genjer-mc" \
+            --colors "orange"
+    done
+fi
+
+if ${plotting_2d_dependency_Gaussian_extrapolated}; then
+    echo "Plotting extrapolated RMS 2D dependency results:"
+    echo "============================="
+
+    for channel in ${channels}; do
+        echo "Processing channel: ${channel}"
+
+        palisade.py task zjet_excalibur jer_plot_2d_dependency_extrapolated \
+            --basename JER_truncated_Gaussian_fit \
+            --jec ${JEC_VERSION} \
+            --sample ${DATA_VERSION} \
+            --corr-level "L1L2Res" \
+            --run-periods Run2018ABCD \
+            --channel "${channel}" \
+            --output-dir JER_truncated_Gaussian_Dependency_extrapolated\
+            --quantities "genjer-mc" \
+            --colors "orange"
+    done
+fi
+
+if ${plotting_2d_dependency_LogNormal_extrapolated}; then
+    echo "Plotting extrapolated RMS 2D dependency results:"
+    echo "============================="
+
+    for channel in ${channels}; do
+        echo "Processing channel: ${channel}"
+
+        palisade.py task zjet_excalibur jer_plot_2d_dependency_extrapolated \
+            --basename JER_truncated_LogNormal_fit \
+            --jec ${JEC_VERSION} \
+            --sample ${DATA_VERSION} \
+            --corr-level "L1L2Res" \
+            --run-periods Run2018ABCD \
+            --channel "${channel}" \
+            --output-dir JER_truncated_LogNormal_Dependency_extrapolated\
+            --quantities "genjer-mc" \
             --colors "orange"
     done
 fi
