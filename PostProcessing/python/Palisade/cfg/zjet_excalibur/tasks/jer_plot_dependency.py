@@ -77,9 +77,6 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
         ],
     }
 
-    print(SPLITTINGS[eta_binning_name])
-    print(SPLITTINGS[zpt_binning_name])
-
     # append '[name]' to format keys that correspond to above expansion keys
     output_format = output_format.format(
         basename=basename,
@@ -115,7 +112,7 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                                 subtrahend=', '.join(['"data:{zpt}/pli-mc"'.format(zpt=_zpt_bin),
                                                       '"data:{zpt}/zres-mc"'.format(zpt=_zpt_bin)
                                                       ])),
-                            'label': r'JER extracted from MC',
+                            'label': r'JER extracted from MC' if 'mc' in _type else r'JER extracted from data',
                             'plot_method': 'errorbar',
                             'color': _color,
                             'marker': "o",
@@ -228,7 +225,7 @@ def get_config(channel, sample_name, jec_name, run_periods, quantities, corr_lev
                                 subtrahend=', '.join(['"data:{eta}/pli-mc"'.format(eta=_eta_bin),
                                                       '"data:{eta}/zres-mc"'.format(eta=_eta_bin)
                                                       ])),
-                            'label': r'JER extracted from MC',
+                            'label': r'JER extracted from MC' if 'mc' in _type else r'JER extracted from data',
                             'plot_method': 'errorbar',
                             'color': _color,
                             'marker': "o",
