@@ -382,7 +382,6 @@ def jer_th1_from_mean(tobjects, x_bins):
     :return:
     Get TH1 with Mean as values and RMS as uncertainties of
     """
-    print(x_bins)
     binning_list = list(tobjects[0].GetXaxis().GetXbins())
     _tobjects = [_ROOTObjectFunctions._project_or_clone(tobjects[0], "e")]
     # Check if binning of all input histograms is the same
@@ -466,7 +465,7 @@ def jer_poly1_fit(tobject, x_min, x_max, start_param_m=0., start_param_c=0.):
     else:
         print(colored("ERROR: No valid input format (TGraphError or TH1!", "red"))
         return None
-    if _n_entries < 2:
+    if _n_entries < 3:
         print(colored("WARNING: Skipping histogram due to low statistic! Setting parameters to zero!", "yellow"))
     else:
         _fit = ROOT.TF1('fit_function', "[0]*x+[1]", x_min, x_max)
@@ -786,7 +785,7 @@ def jer_get_pull(tobject_a, tobject_b):
             for _bin_index in range(_n_bins):
                 _bin_index += 1
                 _numerator = abs(_tobject_a.GetBinContent(_bin_index) - _tobject_b.GetBinContent(_bin_index))
-                _denominator = np.sqrt(abs(np.power(_tobject_a.GetBinError(_bin_index), 2) -
+                _denominator = np.sqrt(abs(np.power(_tobject_a.GetBinError(_bin_index), 2) +
                                            np.power(_tobject_b.GetBinError(_bin_index), 2)))
                 _pull = _numerator / _denominator if _denominator != 0. else 0.
                 _new_tobject.SetBinContent(_bin_index, _pull)
@@ -805,7 +804,7 @@ def jer_get_pull(tobject_a, tobject_b):
                     _bin_index_y += 1
                     _numerator = abs(_tobject_a.GetBinContent(_bin_index_x, _bin_index_y) -
                              _tobject_b.GetBinContent(_bin_index_x, _bin_index_y))
-                    _denominator = np.sqrt(abs(np.power(_tobject_a.GetBinError(_bin_index_x, _bin_index_y), 2) -
+                    _denominator = np.sqrt(abs(np.power(_tobject_a.GetBinError(_bin_index_x, _bin_index_y), 2) +
                                                np.power(_tobject_b.GetBinError(_bin_index_x, _bin_index_y), 2)))
                     # _ratio_tobject = _tobject_a/_tobject_b
                     # _numerator = abs(_ratio_tobject.GetBinContent(_bin_index_x, _bin_index_y) - 1)
@@ -822,4 +821,56 @@ def jer_get_pull(tobject_a, tobject_b):
             print(colored("Error: Input histograms have different number of bins!"))
     else:
         print(colored("WARNING: No valid input histogram '{0}'!".format(type(tobject_a))))
+    return asrootpy(_new_tobject)
+
+
+@InputROOT.add_function
+def jer_th2_from_th1s(tobjects, y_bins):
+    """
+    :param tobjects: list of lists of root TH1 histograms [ , ]
+    :param y_bins: list of bin borders tuples [(1,2), (2,3)] used for y-axis
+    :param x_min:
+    :param x_max:
+    :return:
+    Create new 2D histogramm from multiple 1D histograms
+    """
+    # check length of input lists:
+    _y_len_tobjects = len(tobjects)
+    _len_y_bins = len(y_bins)
+    _fail = False
+    if _y_len_tobjects != _len_y_bins:
+        print(colored("ERROR: Number of y-bins does not correspond to number of y-entries in tobjects-list", "red"))
+        _fail = True
+    # TODO: Check that all histograms in list have same x-binning
+    # print(colored("ERROR: Number of x-bins does not correspond to number of x-entries in tobjects-list", "red"))
+    # _fail = True
+    if _fail:
+        print("Number of bins: (x: {}, y: {})".format('-not-known-', len(y_bins)))
+        print("Number of tobject entries: (x: {}, y: {})".format('-not-known-', _y_len_tobjects))
+        exit(-1)
+    # create binning for histogram
+    _y_binning = [min([y[0] for y in y_bins])] + sorted([y[1] for y in y_bins])
+    _x_binning = tobjects[0].GetXaxis().GetXbins()
+    # clone tobjects to avoid data corruption
+    _tobjects = dict()
+    for _y_index in range(len(y_bins)):
+        # print("Cloning bin: (x: {}, y: {})".format('-not-known-', _y_index))
+        _tobjects.update({_y_index: _ROOTObjectFunctions._project_or_clone(tobjects[_y_index], "e")})
+    # create new histogram to fill results into
+    _hist_name = "hist_2d_" + str(uuid.uuid4().get_hex())
+    _new_tobject = ROOT.TH2D(_hist_name, _hist_name, len(_x_binning) - 1, array('d', _x_binning), len(_y_binning) - 1,
+                             array('d', _y_binning))
+    # access x_axis, y_axis of new histogram for bin by bin access
+    _x_axis = _new_tobject.GetXaxis()
+    _y_axis = _new_tobject.GetYaxis()
+    # Fit function to each histogram
+    for _y_index, _y_bin in enumerate(y_bins):
+        _y_bin_index = _y_axis.FindBin((_y_bin[0] + _y_bin[1]) / 2.)
+        for _x_bin_index in range(_x_axis.GetNbins()):
+            _x_bin_index+=1
+            value = _tobjects[_y_index].GetBinContent(_x_bin_index)
+            uncertainty = _tobjects[_y_index].GetBinError(_x_bin_index)
+            print("Set bin ({}, {}) to {} +/- {}".format(_x_bin_index, _y_bin_index, value, uncertainty))
+            _new_tobject.SetBinContent(_x_bin_index, _y_bin_index, value)
+            _new_tobject.SetBinError(_x_bin_index, _y_bin_index, uncertainty)
     return asrootpy(_new_tobject)
