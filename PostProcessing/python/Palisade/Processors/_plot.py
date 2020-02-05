@@ -541,6 +541,7 @@ class PlotProcessor(_ProcessorBase):
                 _label_bins_with_content = _kwargs.pop('label_bins_with_content', False)
                 _bin_label_format = _kwargs.pop('bin_label_format', "{:f}")
                 _bin_label_color = _kwargs.pop('bin_label_color', 'k')
+                _bin_label_size = _kwargs.pop('bin_label_size', 16)
             else:
                 _args = [_plot_data['x'], _y_data]
 
@@ -574,7 +575,7 @@ class PlotProcessor(_ProcessorBase):
                                     _text_color = _bin_label_color
                                 _ax.text(_x, _y, _bin_label_format.format(_content),
                                          ha='center', va='center',
-                                         fontsize=16,
+                                         fontsize=int(_bin_label_size),
                                          color=_text_color,
                                          transform=_ax.transData
                                  )
