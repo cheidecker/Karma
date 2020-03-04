@@ -16,7 +16,7 @@ import matplotlib.patheffects as PathEffects
 import numpy as np
 
 from matplotlib.gridspec import GridSpec
-from matplotlib.ticker import LogFormatterSciNotation
+from matplotlib.ticker import LogFormatterSciNotation, LogFormatter
 from matplotlib.colors import LogNorm, Normalize, colorConverter
 
 from rootpy.plotting import Hist1D, Hist2D, Profile1D, Efficiency, F1
@@ -61,6 +61,25 @@ class LogFormatterSciNotationForceSublabels(LogFormatterSciNotation):
     def set_locs(self, *args, **kwargs):
         '''override sublabels'''
         _ret = super(LogFormatterSciNotationForceSublabels, self).set_locs(*args, **kwargs)
+
+        # override locations
+        _locs = kwargs.pop("locs", None)
+        if _locs is not None:
+            self._sublabels = _locs
+        else:
+            self._sublabels = {1.0, 2.0, 5.0, 10.0}
+
+        return _ret
+
+
+class LogFormatterForceSublabels(LogFormatter):
+    """Variant of LogFormatter that always displays labels at
+    certain non-decade positions. Needed because parent class may hide these
+    labels based on axis spacing."""
+
+    def set_locs(self, *args, **kwargs):
+        '''override sublabels'''
+        _ret = super(LogFormatterForceSublabels, self).set_locs(*args, **kwargs)
 
         # override locations
         _locs = kwargs.pop("locs", None)
@@ -673,9 +692,16 @@ class PlotProcessor(_ProcessorBase):
             # handle log x-axis formatting (only if 'x_ticklabels' is not given as [])
             if _pad_config.get('x_scale', None) == 'log' and _pad_config.get('x_ticklabels', True):
                 _log_decade_ticklabels = _pad_config.get('x_log_decade_ticklabels', {1.0, 2.0, 5.0, 10.0})
-                _formatter = LogFormatterSciNotationForceSublabels(base=10.0, labelOnlyBase=False)
-                _ax.xaxis.set_minor_formatter(_formatter)
-                _formatter.set_locs(locs=_log_decade_ticklabels)
+                if _pad_config.get('x_formatter', 'LogFormatterSciNotation') == 'LogFormatterSciNotation':
+                    _formatter = LogFormatterSciNotationForceSublabels(base=10.0, labelOnlyBase=False)
+                    _ax.xaxis.set_minor_formatter(_formatter)
+                    _formatter.set_locs(locs=_log_decade_ticklabels)
+                elif _pad_config.get('x_formatter', 'LogFormatterSciNotation') == 'LogFormatter':
+                    _minor_formatter = LogFormatterForceSublabels(base=10.0, labelOnlyBase=False)
+                    _major_formatter = LogFormatter(base=10.0, labelOnlyBase=False)
+                    _ax.xaxis.set_minor_formatter(_minor_formatter)
+                    _ax.xaxis.set_major_formatter(_major_formatter)
+                    _minor_formatter.set_locs(locs=_log_decade_ticklabels)
 
             # NOTE: do not force labeling of minor ticks in log-scaled y axes
             ## handle log y-axis formatting (only if 'y_ticklabels' is not given as [])
